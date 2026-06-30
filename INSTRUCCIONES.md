@@ -40,6 +40,47 @@ El usuario o agency necesita los siguientes permisos de **solo lectura**:
 
 > **Recomendacion**: crear un usuario IAM dedicado para auditorias con solo permisos de lectura.
 
+### Como crear el usuario IAM para el scanner
+
+**Paso 1: Crear un grupo de usuarios**
+
+1. Ingresa a la consola de Huawei Cloud > **IAM** > **User Groups**
+2. Click en **Create User Group**
+3. Nombre: `security-auditors`
+4. Click en **OK**
+
+**Paso 2: Asignar permisos al grupo**
+
+1. En la lista de grupos, click en `security-auditors`
+2. Tab **Permissions** > **Authorize**
+3. Buscar y seleccionar los siguientes roles/politicas del sistema:
+   - `Security Administrator` (este incluye lectura de IAM, password policy, MFA, etc.)
+   - `VPC ReadOnlyAccess`
+   - `ECS ReadOnlyAccess`
+   - `OBS ReadOnlyAccess` (o `Tenant Guest` si no existe el especifico)
+   - `CTS ReadOnlyAccess`
+   - `ELB ReadOnlyAccess`
+4. Seleccionar el **Scope**: `All resources` (para que aplique en todas las regiones)
+5. Click en **OK**
+
+> Nota: si no encontras un rol "ReadOnlyAccess" especifico, podes usar `Tenant Guest` que otorga lectura global a todos los servicios. Es mas amplio pero funcional.
+
+**Paso 3: Crear el usuario IAM**
+
+1. Ve a **IAM** > **Users** > **Create User**
+2. Configurar:
+   - **Username**: `security-scanner`
+   - **Access Type**: marcar **Programmatic access** (genera AK/SK)
+   - **Console access**: desmarcar (no necesita acceso a consola)
+3. Click en **Next**
+4. Asignar al grupo `security-auditors`
+5. Click en **Create**
+6. **Descargar las credenciales** (AK/SK) - solo se muestran una vez
+
+**Paso 4: Usar las credenciales en el scanner**
+
+Copiar el Access Key (AK) y Secret Key (SK) descargados al `config/config.yaml` o configurarlos como variables de entorno.
+
 ---
 
 ## 2. Instalacion
