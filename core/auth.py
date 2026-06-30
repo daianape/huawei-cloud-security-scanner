@@ -93,6 +93,7 @@ class HuaweiCloudAuth:
         creds_config = self.config.get("credentials", {})
         ak = creds_config.get("access_key")
         sk = creds_config.get("secret_key")
+        domain_id = creds_config.get("domain_id", "")
         project_id = self.config.get("project_id")
 
         if not ak or not sk:
@@ -102,7 +103,7 @@ class HuaweiCloudAuth:
 
         if not project_id:
             # Try to auto-discover project_id from the default region
-            discovered = self.discover_projects(ak, sk)
+            discovered = self.discover_projects(ak, sk, domain_id=domain_id, verify_ssl=self.verify_ssl)
             if discovered and self.region in discovered:
                 project_id = discovered[self.region]
                 logger.info(f"Auto-discovered project_id for {self.region}: {project_id}")
@@ -116,6 +117,7 @@ class HuaweiCloudAuth:
             access_key=ak,
             secret_key=sk,
             project_id=project_id,
+            domain_id=domain_id,
             region=self.region,
             account_name="single-account",
         )
@@ -131,6 +133,7 @@ class HuaweiCloudAuth:
             credentials=credentials,
             region=self.region,
             project_id=project_id,
+            domain_id=domain_id,
             verify_ssl=self.verify_ssl,
         )
 
@@ -295,7 +298,7 @@ class HuaweiCloudAuth:
             return False
 
     @staticmethod
-    def discover_projects(ak: str, sk: str, verify_ssl: bool = True) -> dict:
+    def discover_projects(ak: str, sk: str, domain_id: str = "", verify_ssl: bool = True) -> dict:
         """
         Auto-discover all project IDs (one per region) using IAM API.
         Returns a dict mapping region_code -> project_id.
@@ -305,7 +308,7 @@ class HuaweiCloudAuth:
         """
         try:
             # Use GlobalCredentials which don't require project_id
-            global_creds = GlobalCredentials(ak, sk)
+            global_creds = GlobalCredentials(ak, sk, domain_id)
 
             builder = (
                 IamClient.new_builder()

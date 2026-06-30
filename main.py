@@ -300,12 +300,18 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
 
     access_key = click.prompt("  Access Key (AK)", type=str)
     secret_key = click.prompt("  Secret Key (SK)", type=str, hide_input=True)
+    domain_id = click.prompt(
+        "  Domain ID (Account ID from My Credentials)",
+        type=str,
+    )
 
     # Auto-discover projects (no need to ask for project_id or region)
     console.print()
     console.print("  [dim]Discovering available regions and projects...[/dim]")
     from core.auth import HuaweiCloudAuth
-    discovered = HuaweiCloudAuth.discover_projects(access_key, secret_key, verify_ssl=not no_verify_ssl)
+    discovered = HuaweiCloudAuth.discover_projects(
+        access_key, secret_key, domain_id=domain_id, verify_ssl=not no_verify_ssl
+    )
 
     if discovered:
         regions_found = list(discovered.keys())
@@ -333,6 +339,7 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
         "credentials": {
             "access_key": access_key,
             "secret_key": secret_key,
+            "domain_id": domain_id,
         },
         "scanners": {
             "iam": True,
