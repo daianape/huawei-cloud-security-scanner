@@ -27,7 +27,14 @@ Guia completa paso a paso para configurar y ejecutar el scanner de seguridad en 
 
 ### Permisos minimos requeridos
 
-El usuario o agency necesita los siguientes permisos de **solo lectura**:
+La forma mas simple y recomendada es asignar el rol **Tenant Guest** al usuario. Este rol otorga permisos de **solo lectura a todos los servicios** de la cuenta, que es exactamente lo que necesita el scanner.
+
+| Opcion | Rol | Alcance |
+|--------|-----|---------|
+| **Recomendada (simple)** | `Tenant Guest` | Lectura a todos los servicios |
+| Alternativa (granular) | Roles individuales por servicio | Solo lo necesario |
+
+Si preferis la opcion granular en lugar de Tenant Guest:
 
 | Servicio | Rol/Politica |
 |----------|-------------|
@@ -38,7 +45,7 @@ El usuario o agency necesita los siguientes permisos de **solo lectura**:
 | CTS | CTS ReadOnlyAccess |
 | ELB | ELB ReadOnlyAccess |
 
-> **Recomendacion**: crear un usuario IAM dedicado para auditorias con solo permisos de lectura.
+> **Importante:** El rol `Tenant Guest` es suficiente para todo el scanner. No modifica ni crea nada. Solo lee.
 
 ### Como crear el usuario IAM para el scanner
 
@@ -53,17 +60,9 @@ El usuario o agency necesita los siguientes permisos de **solo lectura**:
 
 1. En la lista de grupos, click en `security-auditors`
 2. Tab **Permissions** > **Authorize**
-3. Buscar y seleccionar los siguientes roles/politicas del sistema:
-   - `Security Administrator` (este incluye lectura de IAM, password policy, MFA, etc.)
-   - `VPC ReadOnlyAccess`
-   - `ECS ReadOnlyAccess`
-   - `OBS ReadOnlyAccess` (o `Tenant Guest` si no existe el especifico)
-   - `CTS ReadOnlyAccess`
-   - `ELB ReadOnlyAccess`
-4. Seleccionar el **Scope**: `All resources` (para que aplique en todas las regiones)
+3. Buscar y seleccionar: **Tenant Guest**
+4. Seleccionar el **Scope**: **All resources** (para que aplique en todas las regiones)
 5. Click en **OK**
-
-> Nota: si no encontras un rol "ReadOnlyAccess" especifico, podes usar `Tenant Guest` que otorga lectura global a todos los servicios. Es mas amplio pero funcional.
 
 **Paso 3: Crear el usuario IAM**
 
@@ -381,6 +380,14 @@ python main.py scan --regions all
 
 # Modo verbose (mas detalle en logs)
 python main.py scan --verbose
+
+# === OPCIONES DE RED/SSL ===
+
+# Si estas detras de un proxy corporativo (error de certificado SSL)
+python main.py scan --interactive --no-verify-ssl
+
+# Combinar todo: interactivo + sin SSL + todas las regiones
+python main.py scan --interactive --no-verify-ssl --regions all
 ```
 
 ### Otros comandos
@@ -555,10 +562,35 @@ Esto revoca inmediatamente los permisos delegados. No es necesario eliminar nada
 
 ## 9. Troubleshooting
 
+### Error: "SSL: CERTIFICATE_VERIFY_FAILED" / "self-signed certificate"
+
+```
+Causa: Tu red corporativa tiene un proxy/firewall que intercepta HTTPS
+con un certificado propio que Python no reconoce.
+
+Solucion: Agregar el flag --no-verify-ssl
+  python main.py scan --interactive --no-verify-ssl
+```
+
+### Error: "verify ak sk signature failed" / "Could not auto-discover projects"
+
+```
+Causa: El usuario IAM no tiene permisos suficientes.
+
+Solucion: Asignar el rol "Tenant Guest" al grupo del usuario:
+  1. IAM > User Groups > tu grupo > Permissions > Authorize
+  2. Buscar "Tenant Guest"
+  3. Scope: All resources
+  4. OK
+```
+
 ### Error: "Configuration file not found"
 
 ```
-Solucion: Copiar config.yaml.example a config.yaml
+Solucion: Usar modo interactivo (no necesita config file)
+  python main.py scan --interactive --no-verify-ssl
+
+O copiar config.yaml.example a config.yaml:
   copy config\config.yaml.example config\config.yaml
 ```
 
