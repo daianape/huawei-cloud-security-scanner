@@ -1,0 +1,58 @@
+# Huawei Cloud Security Scanner - Configuration
+# Copy this file to config.yaml and fill in your credentials
+
+# Authentication mode: "single" or "multi"
+mode: "single"
+
+# Region (e.g., la-south-2, ap-southeast-1, cn-north-4)
+region: "la-south-2"
+
+# Project ID (required for most API calls)
+project_id: "your-project-id"
+
+# === Single Account Mode ===
+credentials:
+  access_key: "your-ak"
+  secret_key: "your-sk"
+
+# === Multi Account Mode ===
+# Uncomment and configure for multi-account scanning
+# multi_account:
+#   # Account from which the scanner runs (must have Organizations access)
+#   management_account:
+#     access_key: "management-ak"
+#     secret_key: "management-sk"
+#     domain_id: "management-domain-id"
+#
+#   # Agencies created in target accounts that trust the management account
+#   target_accounts:
+#     - account_name: "Production"
+#       domain_id: "target-domain-id-1"
+#       agency_name: "security-scanner-agency"
+#       project_id: "target-project-id-1"
+#       region: "la-south-2"
+#
+#     - account_name: "Development"
+#       domain_id: "target-domain-id-2"
+#       agency_name: "security-scanner-agency"
+#       project_id: "target-project-id-2"
+#       region: "la-south-2"
+
+# === Scanner Configuration ===
+scanners:
+  # Enable/disable specific scanners
+  iam: true
+  vpc: true
+  ecs: true
+  obs: true
+  cts: true
+  elb: true
+
+# === Output Configuration ===
+output:
+  # Output directory for reports
+  directory: "./output"
+  # Formats: json, html, csv
+  formats:
+    - json
+    - html

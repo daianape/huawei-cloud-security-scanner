@@ -1,0 +1,17 @@
+# Huawei Cloud SDK
+huaweicloudsdkcore>=3.1.80
+huaweicloudsdkiam>=3.1.80
+huaweicloudsdkvpc>=3.1.80
+huaweicloudsdkecs>=3.1.80
+huaweicloudsdkobs>=3.1.80
+huaweicloudsdkelb>=3.1.80
+huaweicloudsdkcts>=3.1.80
+huaweicloudsdkorganizations>=3.1.80
+huaweicloudsdkrms>=3.1.80
+
+# Utilities
+pyyaml>=6.0
+jinja2>=3.1.0
+click>=8.1.0
+rich>=13.0.0
+colorama>=0.4.6
