@@ -92,7 +92,16 @@ class HuaweiCloudAuth:
             )
 
         if not project_id:
-            raise ValueError("Single account mode requires 'project_id' in config")
+            # Try to auto-discover project_id from the default region
+            discovered = self.discover_projects(ak, sk)
+            if discovered and self.region in discovered:
+                project_id = discovered[self.region]
+                logger.info(f"Auto-discovered project_id for {self.region}: {project_id}")
+            else:
+                raise ValueError(
+                    "Missing 'project_id' in config (or set HWCLOUD_PROJECT_ID). "
+                    "Could not auto-discover it either."
+                )
 
         credentials = AccountCredentials(
             access_key=ak,
@@ -268,6 +277,43 @@ class HuaweiCloudAuth:
         except Exception as e:
             logger.warning(f"Credential validation failed: {e}")
             return False
+
+    @staticmethod
+    def discover_projects(ak: str, sk: str) -> dict:
+        """
+        Auto-discover all project IDs (one per region) using IAM API.
+        Returns a dict mapping region_code -> project_id.
+        
+        This uses GlobalCredentials (no project_id needed) to list all
+        projects associated with the account.
+        """
+        try:
+            # Use GlobalCredentials which don't require project_id
+            global_creds = GlobalCredentials(ak, sk)
+
+            iam_client = (
+                IamClient.new_builder()
+                .with_credentials(global_creds)
+                .with_region(IamRegion.value_of("cn-north-4"))  # IAM global endpoint
+                .build()
+            )
+
+            request = KeystoneListProjectsRequest()
+            response = iam_client.keystone_list_projects(request)
+            projects = response.projects or []
+
+            region_map = {}
+            for project in projects:
+                # project.name is usually the region code (e.g., "la-south-2")
+                if project.name and project.id:
+                    region_map[project.name] = project.id
+
+            logger.info(f"Auto-discovered {len(region_map)} projects across regions")
+            return region_map
+
+        except Exception as e:
+            logger.warning(f"Could not auto-discover projects: {e}")
+            return {}
 
     @staticmethod
     def get_basic_credentials(target: ScanTarget) -> BasicCredentials:

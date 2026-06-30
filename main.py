@@ -136,6 +136,26 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
 
     # Determine regions to scan
     regions_to_scan = _resolve_regions(regions_list, cfg)
+
+    # Auto-discover project IDs if scanning multiple regions and not already discovered
+    if len(regions_to_scan) > 1 and "_discovered_projects" not in cfg:
+        creds_config = cfg.get("credentials", {})
+        ak = creds_config.get("access_key")
+        sk = creds_config.get("secret_key")
+        if ak and sk:
+            console.print("  [dim]Discovering project IDs for all regions...[/dim]")
+            from core.auth import HuaweiCloudAuth
+            discovered = HuaweiCloudAuth.discover_projects(ak, sk)
+            if discovered:
+                cfg["_discovered_projects"] = discovered
+                console.print(
+                    f"  [green]✓[/green] Auto-discovered {len(discovered)} region project IDs"
+                )
+                # Filter regions to only those we have project IDs for
+                available_regions = [r for r in regions_to_scan if r in discovered]
+                if available_regions:
+                    regions_to_scan = available_regions
+
     console.print(
         f"[green]✓[/green] Regions: {', '.join(regions_to_scan)}"
     )
@@ -269,13 +289,33 @@ def _prompt_credentials() -> dict:
 
     access_key = click.prompt("  Access Key (AK)", type=str)
     secret_key = click.prompt("  Secret Key (SK)", type=str, hide_input=True)
-    project_id = click.prompt("  Project ID", type=str)
-    region = click.prompt("  Region", type=str, default="la-south-2")
+
+    # Auto-discover projects (no need to ask for project_id or region)
+    console.print()
+    console.print("  [dim]Discovering available regions and projects...[/dim]")
+    from core.auth import HuaweiCloudAuth
+    discovered = HuaweiCloudAuth.discover_projects(access_key, secret_key)
+
+    if discovered:
+        regions_found = list(discovered.keys())
+        console.print(f"  [green]✓[/green] Found {len(regions_found)} regions: {', '.join(regions_found)}")
+        # Use first region as default
+        default_region = regions_found[0] if regions_found else "la-south-2"
+        project_id = discovered.get(default_region, "")
+    else:
+        console.print("  [yellow]⚠ Could not auto-discover projects. Enter manually:[/yellow]")
+        project_id = click.prompt("  Project ID", type=str)
+        default_region = "la-south-2"
+        discovered = {}
+
+    region = click.prompt("  Region", type=str, default=default_region)
+    if region in discovered:
+        project_id = discovered[region]
 
     console.print()
     console.print("[green]✓[/green] Credentials received (in-memory only)")
 
-    return {
+    cfg = {
         "mode": "single",
         "region": region,
         "project_id": project_id,
@@ -296,6 +336,12 @@ def _prompt_credentials() -> dict:
             "formats": ["html", "json"],
         },
     }
+
+    # Store discovered projects for multi-region use
+    if discovered:
+        cfg["_discovered_projects"] = discovered
+
+    return cfg
 
 
 def _resolve_regions(regions_list: str | None, cfg: dict) -> list[str]:
@@ -320,19 +366,26 @@ def _resolve_regions(regions_list: str | None, cfg: dict) -> list[str]:
 def _create_region_target(target: ScanTarget, region: str, cfg: dict) -> ScanTarget | None:
     """
     Create a new ScanTarget adjusted for a specific region.
-    Uses region-specific project_id if configured.
+    Uses region-specific project_id if configured or auto-discovered.
     """
     from core.auth import AccountCredentials
 
-    # Try to find region-specific project_id
+    # Try to find region-specific project_id from multiple sources
     project_id = target.project_id
+
+    # 1. Check auto-discovered projects
+    discovered = cfg.get("_discovered_projects", {})
+    if region in discovered:
+        project_id = discovered[region]
+
+    # 2. Check explicit regions config (overrides discovery)
     regions_cfg = cfg.get("regions", [])
     for r in regions_cfg:
         if r.get("region") == region:
             project_id = r.get("project_id", project_id)
             break
 
-    # For multi-account targets, use the target's own config
+    # 3. For multi-account targets, use the target's own config
     if cfg.get("mode") == "multi":
         multi_cfg = cfg.get("multi_account", {})
         for acct in multi_cfg.get("target_accounts", []):
@@ -340,6 +393,10 @@ def _create_region_target(target: ScanTarget, region: str, cfg: dict) -> ScanTar
                 if acct.get("region") == region:
                     project_id = acct.get("project_id", project_id)
                 break
+
+    if not project_id:
+        logger.warning(f"No project_id found for region {region}, skipping")
+        return None
 
     # Create new target with the correct region
     new_target = ScanTarget(
