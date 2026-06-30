@@ -4,11 +4,23 @@
 # Authentication mode: "single" or "multi"
 mode: "single"
 
-# Region (e.g., la-south-2, ap-southeast-1, cn-north-4)
+# Region principal (e.g., la-south-2, ap-southeast-1, cn-north-4)
 region: "la-south-2"
 
-# Project ID (required for most API calls)
+# Project ID (required for most API calls - corresponds to the main region)
 project_id: "your-project-id"
+
+# === Multi Region ===
+# List of regions to scan. If omitted or empty, only 'region' above is scanned.
+# Use "all" to scan all available Huawei Cloud regions automatically.
+# Each region requires its own project_id.
+# regions:
+#   - region: "la-south-2"
+#     project_id: "project-id-la-south-2"
+#   - region: "ap-southeast-1"
+#     project_id: "project-id-ap-southeast-1"
+#   - region: "cn-north-4"
+#     project_id: "project-id-cn-north-4"
 
 # === Single Account Mode ===
 credentials:

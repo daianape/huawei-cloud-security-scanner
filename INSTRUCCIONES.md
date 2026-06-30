@@ -196,6 +196,25 @@ export HWCLOUD_PROJECT_ID=tu_project_id
 export HWCLOUD_REGION=la-south-2
 ```
 
+### Configuracion Multi Region (opcional)
+
+Para escanear multiples regiones en una sola ejecucion, agregar la seccion `regions` al config:
+
+```yaml
+# Escanear multiples regiones (cada una con su project_id)
+regions:
+  - region: "la-south-2"
+    project_id: "project-id-region-1"
+  - region: "ap-southeast-1"
+    project_id: "project-id-region-2"
+  - region: "cn-north-4"
+    project_id: "project-id-region-3"
+```
+
+> **Nota:** Cada region tiene su propio Project ID. Lo podes obtener desde My Credentials > API Credentials en la consola, seleccionando la region correspondiente.
+
+Si no configuras la seccion `regions`, el scanner usa la region unica definida en `region:`.
+
 ---
 
 ## 4. Configuracion Multi Account
@@ -324,6 +343,17 @@ python main.py scan --format html,json,csv
 # Ejecutar solo scanners especificos
 python main.py scan --scanners iam,vpc
 
+# === OPCIONES DE REGION ===
+
+# Escanear una region especifica (override config)
+python main.py scan --regions la-south-2
+
+# Escanear multiples regiones
+python main.py scan --regions la-south-2,ap-southeast-1,cn-north-4
+
+# Escanear TODAS las regiones disponibles
+python main.py scan --regions all
+
 # Modo verbose (mas detalle en logs)
 python main.py scan --verbose
 ```
@@ -336,6 +366,9 @@ python main.py validate
 
 # Listar scanners disponibles
 python main.py list-scanners
+
+# Listar todas las regiones disponibles
+python main.py list-regions
 
 # Ver version
 python main.py --version
@@ -553,15 +586,24 @@ scripts externos.
 
 ### Regiones disponibles
 
+Ejecutar `python main.py list-regions` para ver la lista completa. Algunas de las mas comunes:
+
 | Region | Codigo |
 |--------|--------|
 | Latin America - Santiago | la-south-2 |
-| Asia Pacific - Singapore | ap-southeast-1 |
+| Latin America - Mexico City | la-north-2 |
+| South America - Sao Paulo | sa-brazil-1 |
+| Asia Pacific - Singapore | ap-southeast-3 |
 | Asia Pacific - Hong Kong | ap-southeast-1 |
+| Asia Pacific - Jakarta | ap-southeast-4 |
+| Europe - Paris | eu-west-0 |
+| Europe - Dublin | eu-west-101 |
+| Africa - Johannesburg | af-south-1 |
 | China North - Beijing | cn-north-4 |
 | China East - Shanghai | cn-east-3 |
-| Europe - Paris | eu-west-0 |
-| Africa - Johannesburg | af-south-1 |
+| Middle East - Istanbul | tr-west-1 |
+
+> **Nota sobre multi-region:** Cada region tiene su propio Project ID. Cuando ejecutas `--regions all`, el scanner intenta conectar a cada region. Si no tenes Project ID para una region, puede fallar en esa region y continuar con las demas.
 
 Consultar la lista completa en: https://developer.huaweicloud.com/endpoint
 

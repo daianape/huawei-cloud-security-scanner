@@ -3,7 +3,8 @@ Huawei Cloud Security Scanner - Main Entry Point
 
 Usage:
     python main.py scan --config config/config.yaml
-    python main.py scan --mode single --region la-south-2
+    python main.py scan --regions la-south-2,ap-southeast-1
+    python main.py scan --regions all
     python main.py scan --output ./output --format html,json,csv
 """
 
@@ -21,6 +22,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from core.config_loader import load_config
 from core.auth import HuaweiCloudAuth, ScanTarget
 from core.models import ScanResult, ScanSummary, Severity, Status
+from core.regions import ALL_REGION_CODES, get_region_name, HUAWEI_CLOUD_REGIONS
 from scanners import AVAILABLE_SCANNERS
 from reports.html_report import HTMLReportGenerator
 from reports.json_report import JSONReportGenerator
@@ -72,12 +74,19 @@ def cli():
     help="Scanners to run (comma-separated): iam, vpc, ecs, obs, cts, elb. Default: all.",
 )
 @click.option(
+    "--regions", "-r",
+    "regions_list",
+    type=str,
+    default=None,
+    help="Regions to scan (comma-separated, or 'all' for all regions). Default: from config.",
+)
+@click.option(
     "--verbose", "-v",
     is_flag=True,
     default=False,
     help="Enable verbose logging.",
 )
-def scan(config, output, output_formats, scanner_list, verbose):
+def scan(config, output, output_formats, scanner_list, regions_list, verbose):
     """Run security assessment scan against Huawei Cloud account(s)."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -110,6 +119,12 @@ def scan(config, output, output_formats, scanner_list, verbose):
         console.print(f"[red]✗ Authentication failed:[/red] {e}")
         sys.exit(1)
 
+    # Determine regions to scan
+    regions_to_scan = _resolve_regions(regions_list, cfg)
+    console.print(
+        f"[green]✓[/green] Regions: {', '.join(regions_to_scan)}"
+    )
+
     # Determine which scanners to run
     if scanner_list:
         scanners_to_run = [s.strip().lower() for s in scanner_list.split(",")]
@@ -128,62 +143,69 @@ def scan(config, output, output_formats, scanner_list, verbose):
     )
     console.print()
 
-    # Run scans
+    # Run scans (per account, per region)
     all_results: list[ScanResult] = []
 
     for target in targets:
-        console.print(
-            f"[bold]Scanning account: {target.account_name}[/bold] "
-            f"(region: {target.region})"
-        )
+        for region in regions_to_scan:
+            # Create a region-specific target
+            region_target = _create_region_target(target, region, cfg)
+            if region_target is None:
+                continue
 
-        account_findings = []
-        scan_start = datetime.utcnow().isoformat()
+            region_name = get_region_name(region)
+            console.print(
+                f"[bold]Scanning account: {region_target.account_name}[/bold] "
+                f"(region: {region} - {region_name})"
+            )
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            for scanner_name in scanners_to_run:
-                if scanner_name not in AVAILABLE_SCANNERS:
-                    console.print(
-                        f"  [yellow]⚠ Unknown scanner: {scanner_name}[/yellow]"
+            account_findings = []
+            scan_start = datetime.utcnow().isoformat()
+
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console,
+            ) as progress:
+                for scanner_name in scanners_to_run:
+                    if scanner_name not in AVAILABLE_SCANNERS:
+                        console.print(
+                            f"  [yellow]⚠ Unknown scanner: {scanner_name}[/yellow]"
+                        )
+                        continue
+
+                    task = progress.add_task(
+                        f"  Scanning {scanner_name.upper()}...", total=None
                     )
-                    continue
 
-                task = progress.add_task(
-                    f"  Scanning {scanner_name.upper()}...", total=None
-                )
+                    scanner_class = AVAILABLE_SCANNERS[scanner_name]
+                    scanner = scanner_class(region_target)
+                    findings = scanner.run()
+                    account_findings.extend(findings)
 
-                scanner_class = AVAILABLE_SCANNERS[scanner_name]
-                scanner = scanner_class(target)
-                findings = scanner.run()
-                account_findings.extend(findings)
+                    failed = sum(1 for f in findings if f.status == Status.FAIL)
+                    progress.update(task, completed=True)
+                    progress.remove_task(task)
+                    console.print(
+                        f"  [{'red' if failed > 0 else 'green'}]"
+                        f"  {scanner_name.upper()}: "
+                        f"{len(findings)} checks, {failed} failed[/]"
+                    )
 
-                failed = sum(1 for f in findings if f.status == Status.FAIL)
-                progress.update(task, completed=True)
-                progress.remove_task(task)
-                console.print(
-                    f"  [{'red' if failed > 0 else 'green'}]"
-                    f"  {scanner_name.upper()}: "
-                    f"{len(findings)} checks, {failed} failed[/]"
-                )
+            # Build summary
+            scan_end = datetime.utcnow().isoformat()
+            summary = ScanSummary(
+                account_name=region_target.account_name,
+                account_id=region_target.domain_id or region_target.project_id,
+                region=region,
+                scan_start=scan_start,
+                scan_end=scan_end,
+            )
+            summary.calculate_from_findings(account_findings)
 
-        # Build summary
-        scan_end = datetime.utcnow().isoformat()
-        summary = ScanSummary(
-            account_name=target.account_name,
-            account_id=target.domain_id or target.project_id,
-            region=target.region,
-            scan_start=scan_start,
-            scan_end=scan_end,
-        )
-        summary.calculate_from_findings(account_findings)
-
-        result = ScanResult(summary=summary, findings=account_findings)
-        all_results.append(result)
-        console.print()
+            result = ScanResult(summary=summary, findings=account_findings)
+            all_results.append(result)
+            console.print()
 
     # Generate reports
     console.print("[bold]Generating reports...[/bold]")
@@ -220,6 +242,60 @@ def scan(config, output, output_formats, scanner_list, verbose):
             f"Open [bold]{generated_files[0][1]}[/bold] in your browser "
             f"to view the dashboard."
         )
+
+
+def _resolve_regions(regions_list: str | None, cfg: dict) -> list[str]:
+    """
+    Resolve which regions to scan based on CLI arg and config.
+    Priority: CLI --regions > config.regions > config.region (single)
+    """
+    if regions_list:
+        if regions_list.strip().lower() == "all":
+            return ALL_REGION_CODES
+        return [r.strip() for r in regions_list.split(",")]
+
+    # Check config for regions list
+    regions_cfg = cfg.get("regions", [])
+    if regions_cfg:
+        return [r["region"] for r in regions_cfg if "region" in r]
+
+    # Fallback to single region
+    return [cfg.get("region", "la-south-2")]
+
+
+def _create_region_target(target: ScanTarget, region: str, cfg: dict) -> ScanTarget | None:
+    """
+    Create a new ScanTarget adjusted for a specific region.
+    Uses region-specific project_id if configured.
+    """
+    from core.auth import AccountCredentials
+
+    # Try to find region-specific project_id
+    project_id = target.project_id
+    regions_cfg = cfg.get("regions", [])
+    for r in regions_cfg:
+        if r.get("region") == region:
+            project_id = r.get("project_id", project_id)
+            break
+
+    # For multi-account targets, use the target's own config
+    if cfg.get("mode") == "multi":
+        multi_cfg = cfg.get("multi_account", {})
+        for acct in multi_cfg.get("target_accounts", []):
+            if acct.get("account_name") == target.account_name:
+                if acct.get("region") == region:
+                    project_id = acct.get("project_id", project_id)
+                break
+
+    # Create new target with the correct region
+    new_target = ScanTarget(
+        account_name=target.account_name,
+        credentials=target.credentials,
+        region=region,
+        project_id=project_id,
+        domain_id=target.domain_id,
+    )
+    return new_target
 
 
 def _print_summary_table(results: list[ScanResult]) -> None:
@@ -271,6 +347,32 @@ def list_scanners():
 
 
 @cli.command()
+def list_regions():
+    """List all available Huawei Cloud regions."""
+    console.print(Panel.fit(
+        "[bold]Available Regions[/bold]",
+        border_style="blue",
+    ))
+    console.print()
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Region Code", style="cyan")
+    table.add_column("Name")
+
+    for r in HUAWEI_CLOUD_REGIONS:
+        table.add_row(r["region"], r["name"])
+
+    console.print(table)
+    console.print()
+    console.print(
+        "Use [bold]--regions la-south-2,ap-southeast-1[/bold] to scan specific regions."
+    )
+    console.print(
+        "Use [bold]--regions all[/bold] to scan all regions."
+    )
+
+
+@cli.command()
 @click.option("--config", "-c", type=click.Path(exists=False), default=None)
 def validate(config):
     """Validate configuration file without running a scan."""
@@ -279,6 +381,11 @@ def validate(config):
         console.print("[green]✓ Configuration is valid![/green]")
         console.print(f"  Mode: {cfg.get('mode', 'single')}")
         console.print(f"  Region: {cfg.get('region', 'not set')}")
+
+        regions_cfg = cfg.get("regions", [])
+        if regions_cfg:
+            region_list = [r["region"] for r in regions_cfg]
+            console.print(f"  Multi-region: {', '.join(region_list)}")
 
         scanners_cfg = cfg.get("scanners", {})
         enabled = [k for k, v in scanners_cfg.items() if v]
