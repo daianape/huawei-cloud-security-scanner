@@ -24,9 +24,8 @@ config/credentials.yaml
 config/credentials.yml
 .env
 
-# Output
+# Output (generated reports, not the source code)
 output/
-reports/
 
 # OS
 .DS_Store
