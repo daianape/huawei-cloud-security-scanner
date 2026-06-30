@@ -46,6 +46,7 @@ class ScanTarget:
     region: str
     project_id: str
     domain_id: Optional[str] = None
+    verify_ssl: bool = True
 
 
 class HuaweiCloudAuth:
@@ -64,7 +65,15 @@ class HuaweiCloudAuth:
         self.config = config
         self.mode = config.get("mode", "single")
         self.region = config.get("region", "la-south-2")
+        self.verify_ssl = config.get("verify_ssl", True)
         self.targets: list[ScanTarget] = []
+
+        # Configure HTTP settings (SSL verification)
+        if not self.verify_ssl:
+            self.http_config = HttpConfig.get_default_config()
+            self.http_config.ignore_ssl_verification = True
+        else:
+            self.http_config = None
 
     def authenticate(self) -> list[ScanTarget]:
         """
@@ -122,6 +131,7 @@ class HuaweiCloudAuth:
             credentials=credentials,
             region=self.region,
             project_id=project_id,
+            verify_ssl=self.verify_ssl,
         )
 
         self.targets = [target]
@@ -217,12 +227,15 @@ class HuaweiCloudAuth:
         """
         global_credentials = GlobalCredentials(mgmt_ak, mgmt_sk, mgmt_domain_id)
 
-        iam_client = (
+        builder = (
             IamClient.new_builder()
             .with_credentials(global_credentials)
             .with_region(IamRegion.value_of("cn-north-4"))  # IAM is global, use any region
-            .build()
         )
+        if self.http_config:
+            builder.with_http_config(self.http_config)
+
+        iam_client = builder.build()
 
         # Build the assume agency request
         assume_role = IdentityAssumerole(
@@ -263,12 +276,15 @@ class HuaweiCloudAuth:
             if creds.security_token:
                 credentials.with_security_token(creds.security_token)
 
-            iam_client = (
+            builder = (
                 IamClient.new_builder()
                 .with_credentials(credentials)
                 .with_region(IamRegion.value_of(creds.region))
-                .build()
             )
+            if self.http_config:
+                builder.with_http_config(self.http_config)
+
+            iam_client = builder.build()
 
             request = KeystoneListProjectsRequest()
             response = iam_client.keystone_list_projects(request)
@@ -279,7 +295,7 @@ class HuaweiCloudAuth:
             return False
 
     @staticmethod
-    def discover_projects(ak: str, sk: str) -> dict:
+    def discover_projects(ak: str, sk: str, verify_ssl: bool = True) -> dict:
         """
         Auto-discover all project IDs (one per region) using IAM API.
         Returns a dict mapping region_code -> project_id.
@@ -291,12 +307,18 @@ class HuaweiCloudAuth:
             # Use GlobalCredentials which don't require project_id
             global_creds = GlobalCredentials(ak, sk)
 
-            iam_client = (
+            builder = (
                 IamClient.new_builder()
                 .with_credentials(global_creds)
                 .with_region(IamRegion.value_of("cn-north-4"))  # IAM global endpoint
-                .build()
             )
+
+            if not verify_ssl:
+                http_config = HttpConfig.get_default_config()
+                http_config.ignore_ssl_verification = True
+                builder.with_http_config(http_config)
+
+            iam_client = builder.build()
 
             request = KeystoneListProjectsRequest()
             response = iam_client.keystone_list_projects(request)

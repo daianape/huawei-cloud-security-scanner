@@ -87,12 +87,18 @@ def cli():
     help="Prompt for credentials interactively (more secure, nothing saved to disk).",
 )
 @click.option(
+    "--no-verify-ssl",
+    is_flag=True,
+    default=False,
+    help="Disable SSL certificate verification (use behind corporate proxies).",
+)
+@click.option(
     "--verbose", "-v",
     is_flag=True,
     default=False,
     help="Enable verbose logging.",
 )
-def scan(config, output, output_formats, scanner_list, regions_list, interactive, verbose):
+def scan(config, output, output_formats, scanner_list, regions_list, interactive, no_verify_ssl, verbose):
     """Run security assessment scan against Huawei Cloud account(s)."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -106,7 +112,7 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
 
     # Interactive mode: prompt for credentials
     if interactive:
-        cfg = _prompt_credentials()
+        cfg = _prompt_credentials(no_verify_ssl)
     else:
         # Load configuration from file
         try:
@@ -120,6 +126,11 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
                 "without a config file.[/dim]"
             )
             sys.exit(1)
+
+    # Apply SSL verification setting
+    if no_verify_ssl:
+        cfg["verify_ssl"] = False
+        console.print("[yellow]⚠ SSL verification disabled[/yellow]")
 
     # Authenticate
     try:
@@ -145,7 +156,7 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
         if ak and sk:
             console.print("  [dim]Discovering project IDs for all regions...[/dim]")
             from core.auth import HuaweiCloudAuth
-            discovered = HuaweiCloudAuth.discover_projects(ak, sk)
+            discovered = HuaweiCloudAuth.discover_projects(ak, sk, verify_ssl=cfg.get("verify_ssl", True))
             if discovered:
                 cfg["_discovered_projects"] = discovered
                 console.print(
@@ -279,7 +290,7 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
         )
 
 
-def _prompt_credentials() -> dict:
+def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
     """
     Prompt user for credentials interactively.
     Credentials are only held in memory during execution.
@@ -294,7 +305,7 @@ def _prompt_credentials() -> dict:
     console.print()
     console.print("  [dim]Discovering available regions and projects...[/dim]")
     from core.auth import HuaweiCloudAuth
-    discovered = HuaweiCloudAuth.discover_projects(access_key, secret_key)
+    discovered = HuaweiCloudAuth.discover_projects(access_key, secret_key, verify_ssl=not no_verify_ssl)
 
     if discovered:
         regions_found = list(discovered.keys())
@@ -405,6 +416,7 @@ def _create_region_target(target: ScanTarget, region: str, cfg: dict) -> ScanTar
         region=region,
         project_id=project_id,
         domain_id=target.domain_id,
+        verify_ssl=getattr(target, 'verify_ssl', cfg.get("verify_ssl", True)),
     )
     return new_target
 

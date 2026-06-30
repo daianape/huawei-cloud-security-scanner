@@ -31,12 +31,14 @@ class ELBScanner(BaseScanner):
     def _init_client(self) -> None:
         """Initialize ELB client."""
         credentials = self._get_basic_credentials()
-        self.client = (
+        builder = (
             ElbClient.new_builder()
             .with_credentials(credentials)
             .with_region(ElbRegion.value_of(self.region))
-            .build()
         )
+        if self.http_config:
+            builder.with_http_config(self.http_config)
+        self.client = builder.build()
 
     def _get_checks(self) -> list:
         """Return list of ELB checks to run."""

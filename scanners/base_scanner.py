@@ -38,7 +38,16 @@ class BaseScanner(ABC):
         self.region = target.region
         self.project_id = target.project_id
         self.account_name = target.account_name
+        self.verify_ssl = getattr(target, 'verify_ssl', True)
         self.logger = logging.getLogger(f"{__name__}.{self.service_name}")
+
+        # HTTP config for SSL verification
+        if not self.verify_ssl:
+            from huaweicloudsdkcore.http.http_config import HttpConfig
+            self.http_config = HttpConfig.get_default_config()
+            self.http_config.ignore_ssl_verification = True
+        else:
+            self.http_config = None
 
     def run(self) -> list[Finding]:
         """

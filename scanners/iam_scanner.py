@@ -40,12 +40,14 @@ class IAMScanner(BaseScanner):
     def _init_client(self) -> None:
         """Initialize IAM client with global credentials."""
         credentials = self._get_global_credentials()
-        self.client = (
+        builder = (
             IamClient.new_builder()
             .with_credentials(credentials)
             .with_region(IamRegion.value_of(self.region))
-            .build()
         )
+        if self.http_config:
+            builder.with_http_config(self.http_config)
+        self.client = builder.build()
 
     def _get_checks(self) -> list:
         """Return list of IAM checks to run."""
