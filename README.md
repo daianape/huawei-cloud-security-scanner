@@ -5,6 +5,7 @@ Herramienta de evaluacion de seguridad para cuentas de Huawei Cloud. Escanea con
 ## Caracteristicas
 
 - **Single Account y Multi Account**: escanea una cuenta individual o multiples cuentas usando IAM Agencies (equivalente a AWS AssumeRole)
+- **Multi Region**: escanea una region, varias, o todas las regiones de Huawei Cloud en una sola ejecucion
 - **6 Scanners de seguridad**: IAM, VPC/Security Groups, ECS, OBS, CTS (logging), ELB
 - **Dashboard HTML interactivo**: sidebar con navegacion, graficos de severidad, tabla de hallazgos filtrable, selector de cuentas
 - **Multiples formatos de reporte**: HTML, JSON, CSV
@@ -22,7 +23,8 @@ huawei-cloud-security-scanner/
 ├── core/
 │   ├── auth.py                # Autenticacion (single/multi account)
 │   ├── config_loader.py       # Carga y validacion de config
-│   └── models.py              # Modelos de datos (Finding, Summary)
+│   ├── models.py              # Modelos de datos (Finding, Summary)
+│   └── regions.py             # Lista de regiones disponibles
 ├── scanners/
 │   ├── base_scanner.py        # Clase base abstracta
 │   ├── iam_scanner.py         # Checks de IAM
@@ -83,6 +85,40 @@ copy config\config.yaml.example config\config.yaml
 
 # 4. Ejecutar el scan
 python main.py scan
+```
+
+## Comandos CLI
+
+```bash
+# Scan basico (region y cuenta del config)
+python main.py scan
+
+# Scan de una region especifica
+python main.py scan --regions la-south-2
+
+# Scan de multiples regiones
+python main.py scan --regions la-south-2,ap-southeast-1,cn-north-4
+
+# Scan de TODAS las regiones disponibles
+python main.py scan --regions all
+
+# Solo scanners especificos
+python main.py scan --scanners iam,vpc
+
+# Elegir formatos de salida
+python main.py scan --format html,json,csv
+
+# Combinar opciones
+python main.py scan --regions all --scanners iam,vpc --format html,csv --output ./reportes
+
+# Listar regiones disponibles
+python main.py list-regions
+
+# Listar scanners disponibles
+python main.py list-scanners
+
+# Validar configuracion
+python main.py validate
 ```
 
 ## Documentacion Detallada
