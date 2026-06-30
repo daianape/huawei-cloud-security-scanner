@@ -230,15 +230,20 @@ class HuaweiCloudAuth:
         """
         global_credentials = GlobalCredentials(mgmt_ak, mgmt_sk, mgmt_domain_id)
 
-        builder = (
+        http_config = HttpConfig.get_default_config()
+        if self.http_config:
+            http_config = self.http_config
+
+        # Use global IAM endpoint
+        endpoint = "https://iam.myhuaweicloud.com"
+
+        iam_client = (
             IamClient.new_builder()
             .with_credentials(global_credentials)
-            .with_region(IamRegion.value_of("cn-north-4"))  # IAM is global, use any region
+            .with_http_config(http_config)
+            .with_endpoint(endpoint)
+            .build()
         )
-        if self.http_config:
-            builder.with_http_config(self.http_config)
-
-        iam_client = builder.build()
 
         # Build the assume agency request
         assume_role = IdentityAssumerole(
@@ -279,15 +284,20 @@ class HuaweiCloudAuth:
             if creds.security_token:
                 credentials.with_security_token(creds.security_token)
 
-            builder = (
+            http_config = HttpConfig.get_default_config()
+            if self.http_config:
+                http_config = self.http_config
+
+            # Use the region-specific IAM endpoint
+            endpoint = f"https://iam.{creds.region}.myhuaweicloud.com"
+
+            iam_client = (
                 IamClient.new_builder()
                 .with_credentials(credentials)
-                .with_region(IamRegion.value_of(creds.region))
+                .with_http_config(http_config)
+                .with_endpoint(endpoint)
+                .build()
             )
-            if self.http_config:
-                builder.with_http_config(self.http_config)
-
-            iam_client = builder.build()
 
             request = KeystoneListProjectsRequest()
             response = iam_client.keystone_list_projects(request)
@@ -306,39 +316,52 @@ class HuaweiCloudAuth:
         This uses GlobalCredentials (no project_id needed) to list all
         projects associated with the account.
         """
-        try:
-            # Use GlobalCredentials which don't require project_id
-            global_creds = GlobalCredentials(ak, sk, domain_id)
+        # Try multiple IAM endpoints (international vs China)
+        endpoints_to_try = [
+            "https://iam.myhuaweicloud.com",
+            "https://iam.la-south-2.myhuaweicloud.com",
+            "https://iam.ap-southeast-1.myhuaweicloud.com",
+            "https://iam.cn-north-4.myhuaweicloud.com",
+        ]
 
-            builder = (
-                IamClient.new_builder()
-                .with_credentials(global_creds)
-                .with_region(IamRegion.value_of("cn-north-4"))  # IAM global endpoint
-            )
+        for endpoint in endpoints_to_try:
+            try:
+                global_creds = GlobalCredentials(ak, sk, domain_id)
 
-            if not verify_ssl:
                 http_config = HttpConfig.get_default_config()
-                http_config.ignore_ssl_verification = True
-                builder.with_http_config(http_config)
+                if not verify_ssl:
+                    http_config.ignore_ssl_verification = True
 
-            iam_client = builder.build()
+                iam_client = (
+                    IamClient.new_builder()
+                    .with_credentials(global_creds)
+                    .with_http_config(http_config)
+                    .with_endpoint(endpoint)
+                    .build()
+                )
 
-            request = KeystoneListProjectsRequest()
-            response = iam_client.keystone_list_projects(request)
-            projects = response.projects or []
+                request = KeystoneListProjectsRequest()
+                response = iam_client.keystone_list_projects(request)
+                projects = response.projects or []
 
-            region_map = {}
-            for project in projects:
-                # project.name is usually the region code (e.g., "la-south-2")
-                if project.name and project.id:
-                    region_map[project.name] = project.id
+                region_map = {}
+                for project in projects:
+                    if project.name and project.id:
+                        region_map[project.name] = project.id
 
-            logger.info(f"Auto-discovered {len(region_map)} projects across regions")
-            return region_map
+                if region_map:
+                    logger.info(
+                        f"Auto-discovered {len(region_map)} projects "
+                        f"via {endpoint}"
+                    )
+                    return region_map
 
-        except Exception as e:
-            logger.warning(f"Could not auto-discover projects: {e}")
-            return {}
+            except Exception as e:
+                logger.debug(f"Endpoint {endpoint} failed: {e}")
+                continue
+
+        logger.warning("Could not auto-discover projects from any endpoint")
+        return {}
 
     @staticmethod
     def get_basic_credentials(target: ScanTarget) -> BasicCredentials:
