@@ -124,7 +124,50 @@ pip install esdk-obs-python
 
 Usa este modo cuando quieras escanear **una sola cuenta** de Huawei Cloud.
 
-### Paso 1: Obtener credenciales
+### Opcion A: Modo interactivo (recomendado)
+
+La forma mas segura. Las credenciales se ingresan por prompt y solo existen en memoria durante la ejecucion:
+
+```bash
+python main.py scan --interactive
+```
+
+Te va a pedir:
+```
+  Access Key (AK): XXXXXXXXXXXXXXXXXX
+  Secret Key (SK): (oculto, no se muestra en pantalla)
+  Project ID: abc123def456...
+  Region [la-south-2]: la-south-2
+```
+
+Las credenciales **no quedan guardadas en ningun archivo**. Al terminar la ejecucion, desaparecen.
+
+### Opcion B: Variables de entorno
+
+Util para automatizacion sin archivos en disco:
+
+```bash
+# Windows
+set HWCLOUD_AK=tu_access_key
+set HWCLOUD_SK=tu_secret_key
+set HWCLOUD_PROJECT_ID=tu_project_id
+set HWCLOUD_REGION=la-south-2
+
+# Linux/Mac
+export HWCLOUD_AK=tu_access_key
+export HWCLOUD_SK=tu_secret_key
+export HWCLOUD_PROJECT_ID=tu_project_id
+export HWCLOUD_REGION=la-south-2
+
+# Luego ejecutar normalmente
+python main.py scan
+```
+
+### Opcion C: Archivo config.yaml
+
+Para ejecuciones repetidas o automatizadas. **Proteger el archivo con permisos adecuados.**
+
+#### Paso 1: Obtener credenciales
 
 1. Ingresa a la consola de Huawei Cloud: https://console.huaweicloud.com
 2. Click en tu nombre de usuario (esquina superior derecha) > **My Credentials**
@@ -176,24 +219,6 @@ output:
   formats:
     - html
     - json
-```
-
-### Alternativa: Variables de entorno
-
-En lugar de poner credenciales en el archivo, podes usar variables de entorno:
-
-```bash
-# Windows
-set HWCLOUD_AK=tu_access_key
-set HWCLOUD_SK=tu_secret_key
-set HWCLOUD_PROJECT_ID=tu_project_id
-set HWCLOUD_REGION=la-south-2
-
-# Linux/Mac
-export HWCLOUD_AK=tu_access_key
-export HWCLOUD_SK=tu_secret_key
-export HWCLOUD_PROJECT_ID=tu_project_id
-export HWCLOUD_REGION=la-south-2
 ```
 
 ### Configuracion Multi Region (opcional)

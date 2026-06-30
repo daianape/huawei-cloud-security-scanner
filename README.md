@@ -93,6 +93,9 @@ python main.py scan
 # Scan basico (region y cuenta del config)
 python main.py scan
 
+# === MODO INTERACTIVO (mas seguro, no guarda credenciales) ===
+python main.py scan --interactive
+
 # Scan de una region especifica
 python main.py scan --regions la-south-2
 
@@ -111,6 +114,9 @@ python main.py scan --format html,json,csv
 # Combinar opciones
 python main.py scan --regions all --scanners iam,vpc --format html,csv --output ./reportes
 
+# Interactivo + multi-region
+python main.py scan --interactive --regions la-south-2,ap-southeast-1
+
 # Listar regiones disponibles
 python main.py list-regions
 
@@ -120,6 +126,14 @@ python main.py list-scanners
 # Validar configuracion
 python main.py validate
 ```
+
+## Metodos de Autenticacion (de mas seguro a menos)
+
+| Metodo | Comando | Credenciales en disco |
+|--------|---------|----------------------|
+| Prompt interactivo | `--interactive` | No, solo en memoria |
+| Variables de entorno | `HWCLOUD_AK`, `HWCLOUD_SK` | No (en la sesion del shell) |
+| Archivo config.yaml | `--config config.yaml` | Si (proteger con permisos) |
 
 ## Documentacion Detallada
 

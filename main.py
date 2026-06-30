@@ -81,12 +81,18 @@ def cli():
     help="Regions to scan (comma-separated, or 'all' for all regions). Default: from config.",
 )
 @click.option(
+    "--interactive", "-i",
+    is_flag=True,
+    default=False,
+    help="Prompt for credentials interactively (more secure, nothing saved to disk).",
+)
+@click.option(
     "--verbose", "-v",
     is_flag=True,
     default=False,
     help="Enable verbose logging.",
 )
-def scan(config, output, output_formats, scanner_list, regions_list, verbose):
+def scan(config, output, output_formats, scanner_list, regions_list, interactive, verbose):
     """Run security assessment scan against Huawei Cloud account(s)."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -98,13 +104,22 @@ def scan(config, output, output_formats, scanner_list, regions_list, verbose):
     ))
     console.print()
 
-    # Load configuration
-    try:
-        cfg = load_config(config)
-        console.print("[green]✓[/green] Configuration loaded successfully")
-    except Exception as e:
-        console.print(f"[red]✗ Configuration error:[/red] {e}")
-        sys.exit(1)
+    # Interactive mode: prompt for credentials
+    if interactive:
+        cfg = _prompt_credentials()
+    else:
+        # Load configuration from file
+        try:
+            cfg = load_config(config)
+            console.print("[green]✓[/green] Configuration loaded successfully")
+        except Exception as e:
+            console.print(f"[red]✗ Configuration error:[/red] {e}")
+            console.print()
+            console.print(
+                "[dim]Tip: Use --interactive (-i) to enter credentials "
+                "without a config file.[/dim]"
+            )
+            sys.exit(1)
 
     # Authenticate
     try:
@@ -242,6 +257,45 @@ def scan(config, output, output_formats, scanner_list, regions_list, verbose):
             f"Open [bold]{generated_files[0][1]}[/bold] in your browser "
             f"to view the dashboard."
         )
+
+
+def _prompt_credentials() -> dict:
+    """
+    Prompt user for credentials interactively.
+    Credentials are only held in memory during execution.
+    """
+    console.print("[bold]Interactive mode[/bold] - credentials will NOT be saved to disk.")
+    console.print()
+
+    access_key = click.prompt("  Access Key (AK)", type=str)
+    secret_key = click.prompt("  Secret Key (SK)", type=str, hide_input=True)
+    project_id = click.prompt("  Project ID", type=str)
+    region = click.prompt("  Region", type=str, default="la-south-2")
+
+    console.print()
+    console.print("[green]✓[/green] Credentials received (in-memory only)")
+
+    return {
+        "mode": "single",
+        "region": region,
+        "project_id": project_id,
+        "credentials": {
+            "access_key": access_key,
+            "secret_key": secret_key,
+        },
+        "scanners": {
+            "iam": True,
+            "vpc": True,
+            "ecs": True,
+            "obs": True,
+            "cts": True,
+            "elb": True,
+        },
+        "output": {
+            "directory": "./output",
+            "formats": ["html", "json"],
+        },
+    }
 
 
 def _resolve_regions(regions_list: str | None, cfg: dict) -> list[str]:
