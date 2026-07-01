@@ -39,16 +39,25 @@ class IAMScanner(BaseScanner):
 
     def _init_client(self) -> None:
         """Initialize IAM client with global credentials."""
-        credentials = self._get_global_credentials()
-        endpoint = f"https://iam.{self.region}.myhuaweicloud.com"
-        builder = (
-            IamClient.new_builder()
-            .with_credentials(credentials)
-            .with_endpoint(endpoint)
+        from huaweicloudsdkcore.http.http_config import HttpConfig as HC
+        from huaweicloudsdkcore.auth.credentials import GlobalCredentials as GC
+
+        creds = GC(
+            self.target.credentials.access_key,
+            self.target.credentials.secret_key,
+            self.target.credentials.domain_id or "",
         )
-        if self.http_config:
-            builder.with_http_config(self.http_config)
-        self.client = builder.build()
+
+        config = HC.get_default_config()
+        config.ignore_ssl_verification = True
+
+        self.client = (
+            IamClient.new_builder()
+            .with_credentials(creds)
+            .with_http_config(config)
+            .with_region(IamRegion.value_of(self.region))
+            .build()
+        )
 
     def _get_checks(self) -> list:
         """Return list of IAM checks to run."""
