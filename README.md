@@ -411,6 +411,8 @@ Esto permite escanear cualquier region futura sin necesidad de actualizar el SDK
 
 El reporte principal es un dashboard HTML estatico (single-file, sin servidor) inspirado en AWS Service Screener. Se genera como `output/index.html` y se abre directamente en el navegador.
 
+![Dashboard Home](docs/images/dashboard-home-full.png)
+
 ### Arquitectura del Dashboard
 
 - **Single Page Application** con navegacion interna via JavaScript

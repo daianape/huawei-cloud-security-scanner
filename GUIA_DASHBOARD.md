@@ -2,6 +2,8 @@
 
 Esta guia explica como navegar y aprovechar el dashboard HTML interactivo generado por Huawei Cloud Security Scanner.
 
+![Vista general del dashboard](docs/images/dashboard-home-full.png)
+
 ---
 
 ## Como Abrir el Dashboard
@@ -37,6 +39,8 @@ El dashboard tiene 3 zonas principales:
 
 El sidebar oscuro a la izquierda contiene la navegacion principal.
 
+![Sidebar con navegacion de servicios](docs/images/dashboard-sidebar.png)
+
 ### Secciones del Sidebar
 
 | Item | Que hace |
@@ -69,6 +73,8 @@ La barra superior se mantiene fija al hacer scroll.
 
 Es la vista ejecutiva. Muestra el resumen del scan completo.
 
+![Pagina Home con KPIs y graficos](docs/images/dashboard-home-kpis.png)
+
 ### 3.1 Stat Cards (KPIs)
 
 Las tarjetas de colores en la parte superior muestran metricas clave:
@@ -96,6 +102,8 @@ Click en "Summary" para expandir. Muestra barras de progreso con el porcentaje d
 
 Dos graficos lado a lado:
 
+![Graficos de severidad y servicios](docs/images/dashboard-home-charts.png)
+
 | Grafico | Tipo | Que muestra |
 |---------|------|-------------|
 | High Risk - Group by Service | Barras | Cantidad de findings fallidos por servicio |
@@ -117,6 +125,8 @@ Grid de cards clickeables, una por cada servicio escaneado. Cada card muestra:
 ## 4. Pagina Findings (Tabla de Hallazgos)
 
 Esta pagina muestra TODOS los hallazgos en una tabla unificada.
+
+![Tabla de findings con filtros](docs/images/dashboard-findings-table.png)
 
 ### 4.1 Filtros
 
@@ -179,6 +189,8 @@ Las columnas ordenables son: Service, Region, Check, Type, ResourceID, Severity,
 ## 5. Pagina de Detalle por Servicio
 
 Se accede haciendo click en un servicio (desde el sidebar o desde las Service Cards en Home).
+
+![Vista detalle de un servicio con resource cards](docs/images/dashboard-service-detail.png)
 
 ### 5.1 Stat Cards del Servicio
 
@@ -245,6 +257,9 @@ Los paneles con header dorado o teal son colapsables:
 ## 7. Responsive (Mobile/Tablet)
 
 En pantallas chicas (< 900px):
+
+![Vista mobile con sidebar colapsado](docs/images/dashboard-mobile.png)
+
 - El sidebar se oculta automaticamente
 - Aparece un boton hamburguesa en la top bar
 - Las stat cards se reorganizan en 2 columnas
@@ -345,3 +360,25 @@ Repetir para High, luego Medium
 | Tabla vacia | Verificar filtros activos; resetear seleccionando "All" en cada filtro |
 | Sidebar no aparece (mobile) | Click en el icono de tres lineas arriba a la izquierda |
 | CSV con caracteres raros | Abrir con encoding UTF-8 en Excel (Datos > Desde texto) |
+
+---
+
+## Imagenes del Dashboard
+
+Las imagenes de esta guia se encuentran en `docs/images/`. Para generarlas:
+
+1. Ejecutar un scan: `python main.py scan --no-verify-ssl`
+2. Abrir `output/index.html` en el navegador
+3. Tomar los siguientes screenshots y guardarlos con estos nombres exactos:
+
+| Archivo | Que capturar |
+|---------|--------------|
+| `dashboard-home-full.png` | Pagina Home completa (vista general con sidebar visible) |
+| `dashboard-sidebar.png` | Solo el sidebar (recortar la zona izquierda) |
+| `dashboard-home-kpis.png` | Stat cards + barras de severidad (zona superior de Home) |
+| `dashboard-home-charts.png` | Los dos graficos (doughnut + barras) |
+| `dashboard-findings-table.png` | Pagina Findings con la tabla y filtros visibles |
+| `dashboard-service-detail.png` | Vista detalle de un servicio (ej: IAM) con resource cards |
+| `dashboard-mobile.png` | Vista mobile (F12 > toggle device toolbar > 375px ancho) |
+
+**Tip**: En Chrome, F12 > "Toggle device toolbar" para simular mobile.
