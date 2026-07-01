@@ -123,14 +123,8 @@ class HuaweiCloudAuth:
             account_name="single-account",
         )
 
-        # Validate credentials by making a test API call
-        if self._validate_credentials(credentials):
-            logger.info("Single account authentication successful")
-        else:
-            logger.warning(
-                "Could not validate credentials via API. "
-                "Proceeding with scan anyway - individual scanners will report errors if auth fails."
-            )
+        # Skip credential validation - scanners will report errors individually
+        logger.info("Single account authentication configured")
 
         target = ScanTarget(
             account_name=credentials.account_name,

@@ -57,24 +57,28 @@ class BaseScanner(ABC):
 
     def _build_client(self, client_class, region_class, credentials):
         """
-        Build a service client with proper HTTP config.
-        Uses .with_region() which is proven to work (test_connection.py).
+        Build a service client.
+        Replicates exact pattern from test_connection.py that works.
         """
-        # Build credentials directly from target (same as test_connection.py)
+        from huaweicloudsdkcore.http.http_config import HttpConfig as HC
+
         direct_creds = BasicCredentials(
             self.target.credentials.access_key,
             self.target.credentials.secret_key,
             self.target.project_id,
         )
 
-        builder = (
+        config = HC.get_default_config()
+        config.ignore_ssl_verification = True
+
+        client = (
             client_class.new_builder()
             .with_credentials(direct_creds)
+            .with_http_config(config)
             .with_region(region_class.value_of(self.region))
+            .build()
         )
-        if self.http_config:
-            builder.with_http_config(self.http_config)
-        return builder.build()
+        return client
 
     def run(self) -> list[Finding]:
         """
