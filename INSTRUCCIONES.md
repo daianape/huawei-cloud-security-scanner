@@ -14,9 +14,11 @@ Guia completa paso a paso para configurar y ejecutar el scanner de seguridad en 
 6. [Visualizacion de Reportes](#6-visualizacion-de-reportes)
 7. [Exportacion de Informes](#7-exportacion-de-informes)
 8. [Agregar Nuevas Regiones](#8-agregar-nuevas-regiones)
-9. [Modo Multi Account](#9-modo-multi-account)
-10. [Sobre Recursos Creados](#10-sobre-recursos-creados)
-11. [Troubleshooting](#11-troubleshooting)
+9. [Regiones Custom/Locales](#9-regiones-customlocales)
+10. [Modo Multi Account](#10-modo-multi-account)
+11. [Scanners Disponibles](#11-scanners-disponibles)
+12. [Sobre Recursos Creados](#12-sobre-recursos-creados)
+13. [Troubleshooting](#13-troubleshooting)
 
 ---
 
@@ -239,14 +241,14 @@ python main.py scan --no-verify-ssl --regions la-south-2,la-north-2,ap-southeast
 # Scan de TODAS las regiones configuradas (con project_id)
 python main.py scan --no-verify-ssl --regions all
 
-# Solo scanners especificos
-python main.py scan --no-verify-ssl --scanners iam,vpc
+# Solo scanners especificos (cualquier combinacion de los 28 scanners)
+python main.py scan --no-verify-ssl --scanners iam,vpc,rds,kms,cce
 
 # Elegir formatos de salida
 python main.py scan --no-verify-ssl --format html,json,csv
 
 # Combinar opciones
-python main.py scan --no-verify-ssl --regions all --scanners iam,vpc --format html,csv
+python main.py scan --no-verify-ssl --regions all --scanners iam,vpc,rds --format html,csv
 
 # Modo verbose (mas detalle)
 python main.py scan --no-verify-ssl --verbose
@@ -353,7 +355,42 @@ O consultar: https://developer.huaweicloud.com/intl/en-us/endpoint
 
 ---
 
-## 9. Modo Multi Account
+## 9. Regiones Custom/Locales
+
+El scanner soporta regiones que no estan registradas oficialmente en el SDK de Huawei Cloud.
+
+### Como funciona
+
+El sistema `_build_client` en `base_scanner.py` implementa un fallback:
+1. Intenta conectar via `with_region()` (regiones estandar del SDK)
+2. Si la region no existe en el SDK, usa `with_endpoint()` con la URL: `https://SERVICE.REGION.myhuaweicloud.com`
+
+### Ejemplo: Buenos Aires (sa-argentina-1)
+
+En `config/config.yaml`:
+```yaml
+regions:
+  - region: "sa-argentina-1"
+    project_id: "tu-project-id-de-buenos-aires"
+```
+
+Ejecutar normalmente:
+```bash
+python main.py scan --no-verify-ssl --regions sa-argentina-1
+```
+
+El scanner detectara automaticamente que `sa-argentina-1` no esta en el registro del SDK y usara el endpoint explicito.
+
+### Agregar cualquier region futura
+
+Si Huawei Cloud habilita una nueva region (ej: `xx-nuevo-1`):
+1. Obtener el Project ID de esa region
+2. Agregarlo al `config.yaml`
+3. Ejecutar el scan - funciona sin actualizar el SDK
+
+---
+
+## 10. Modo Multi Account
 
 Para escanear multiples cuentas de Huawei Cloud desde una cuenta central.
 
@@ -369,7 +406,82 @@ Las credenciales de la cuenta management tambien van por variables de entorno (`
 
 ---
 
-## 10. Sobre Recursos Creados
+## 11. Scanners Disponibles (28)
+
+El scanner cubre los siguientes servicios de Huawei Cloud:
+
+### Categoria: Identidad y Acceso
+
+| Scanner | Nombre CLI | Descripcion |
+|---------|-----------|-------------|
+| IAM | `iam` | Usuarios, MFA, access keys, password policy, permisos admin |
+| Identity Center | `identity-center` | Permission sets, duracion de sesiones |
+| KMS/DEW | `kms` | Rotacion de CMKs, keys deshabilitadas, pendientes de eliminacion |
+| TMS | `tms` | Tags predefinidos para gobernanza |
+
+### Categoria: Red
+
+| Scanner | Nombre CLI | Descripcion |
+|---------|-----------|-------------|
+| VPC | `vpc` | Security groups, puertos abiertos, egress sin restriccion |
+| NAT Gateway | `nat` | Reglas DNAT exponiendo puertos sensibles (SSH, RDP, DBs) |
+| EIP | `eip` | IPs elasticas no asociadas |
+| WAF | `waf` | Dominios sin proteccion, modo deteccion |
+| Cloud Firewall | `cfw` | Firewall no desplegado o inactivo |
+| VPN | `vpn` | Cifrado debil (DES/3DES) en IKE/IPSec |
+| DNS | `dns` | Zonas publicas que pueden exponer infraestructura |
+| ELB | `elb` | Listeners sin HTTPS, version TLS obsoleta |
+
+### Categoria: Computo
+
+| Scanner | Nombre CLI | Descripcion |
+|---------|-----------|-------------|
+| ECS | `ecs` | Instancias con IP publica, SG default |
+| CCE | `cce` | API Kubernetes publica, version K8s desactualizada |
+| BMS | `bms` | Bare Metal con IP publica, SG default |
+| FunctionGraph | `functiongraph` | Funciones sin VPC (acceso directo a internet) |
+| IMS | `ims` | Imagenes publicas, imagenes antiguas (>365 dias) |
+
+### Categoria: Almacenamiento
+
+| Scanner | Nombre CLI | Descripcion |
+|---------|-----------|-------------|
+| OBS | `obs` | Buckets publicos (lectura/escritura), sin cifrado, sin logging |
+| RDS | `rds` | Base de datos con IP publica, sin backup, sin SSL |
+| DCS | `dcs` | Redis sin password, acceso publico, sin SSL |
+| EVS | `evs` | Volumenes sin cifrado en reposo |
+| SFS Turbo | `sfs` | File systems sin cifrado |
+| CBR | `cbr` | Vaults vacios, retencion de backup insuficiente |
+
+### Categoria: Logging y Monitoreo
+
+| Scanner | Nombre CLI | Descripcion |
+|---------|-----------|-------------|
+| CTS | `cts` | Cloud Trace deshabilitado, sin almacenamiento OBS |
+| Cloud Eye | `ces` | Sin alarmas de monitoreo |
+| LTS | `lts` | Retencion de logs menor a 30 dias |
+| Config/RMS | `config` | Sin reglas de compliance |
+| SMN | `smn` | Topicos de notificacion |
+
+### Ejecutar scanners selectivos
+
+```bash
+# Solo scanners de red
+python main.py scan --no-verify-ssl --scanners vpc,nat,eip,waf,cfw,vpn,dns,elb
+
+# Solo almacenamiento
+python main.py scan --no-verify-ssl --scanners obs,rds,dcs,evs,sfs,cbr
+
+# Solo identidad
+python main.py scan --no-verify-ssl --scanners iam,identity-center,kms,tms
+
+# Scan minimo rapido
+python main.py scan --no-verify-ssl --scanners iam,vpc,ecs
+```
+
+---
+
+## 12. Sobre Recursos Creados
 
 ### Esta herramienta NO crea ningun recurso
 
@@ -386,7 +498,7 @@ El scanner es **100% de solo lectura**. No ejecuta ninguna operacion de Create, 
 
 ---
 
-## 11. Troubleshooting
+## 13. Troubleshooting
 
 ### Error: "Credenciales no configuradas"
 
@@ -440,6 +552,24 @@ Esto es intencional (seguridad). Cada vez que abras una terminal nueva,
 volver a configurar:
   set HWCLOUD_AK=tu_access_key
   set HWCLOUD_SK=tu_secret_key
+```
+
+### Warning: "Region 'xxx' not in SDK registry, using explicit endpoint"
+
+```
+Causa: La region no esta registrada en el SDK de Huawei (es custom/local).
+
+Esto NO es un error. El scanner usa automaticamente un endpoint explicito.
+El scan continuara normalmente.
+```
+
+### Scanner reporta "SDK No Disponible"
+
+```
+Causa: Falta instalar el SDK del servicio.
+
+Solucion: pip install -r requirements.txt
+O instalar el SDK especifico, ej: pip install huaweicloudsdkrds
 ```
 
 ---
