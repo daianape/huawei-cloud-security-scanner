@@ -32,6 +32,11 @@ huaweicloudsdkces>=3.1.80
 huaweicloudsdklts>=3.1.80
 huaweicloudsdksmn>=3.1.80
 
+# Huawei Cloud SDK - Additional scanners
+huaweicloudsdkbms>=3.1.80
+huaweicloudsdkims>=3.1.80
+huaweicloudsdktms>=3.1.80
+
 # Utilities
 pyyaml>=6.0
 jinja2>=3.1.0

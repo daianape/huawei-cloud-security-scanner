@@ -26,6 +26,9 @@ from scanners.ces_scanner import CESScanner
 from scanners.lts_scanner import LTSScanner
 from scanners.config_scanner import ConfigScanner
 from scanners.smn_scanner import SMNScanner
+from scanners.bms_scanner import BMSScanner
+from scanners.ims_scanner import IMSScanner
+from scanners.tms_scanner import TMSScanner
 
 AVAILABLE_SCANNERS = {
     "vpc": VPCScanner,
@@ -53,6 +56,9 @@ AVAILABLE_SCANNERS = {
     "lts": LTSScanner,
     "config": ConfigScanner,
     "smn": SMNScanner,
+    "bms": BMSScanner,
+    "ims": IMSScanner,
+    "tms": TMSScanner,
 }
 
 __all__ = [

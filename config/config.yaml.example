@@ -49,6 +49,8 @@ regions:
   # South America
   - region: "sa-brazil-1"
     project_id: ""          # Sao Paulo (Brasil)
+  - region: "sa-argentina-1"
+    project_id: ""          # Buenos Aires (Argentina)
 
   # Asia Pacific
   - region: "ap-southeast-1"
@@ -117,6 +119,10 @@ scanners:
   lts: true
   config: true
   smn: true
+  # Adicionales
+  bms: true
+  ims: true
+  tms: true
 
 # === OUTPUT ===
 output:
