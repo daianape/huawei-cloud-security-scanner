@@ -305,8 +305,8 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
     )
     cloud_domain = click.prompt(
         "  Cloud domain",
-        type=click.Choice(["huaweicloud.com", "myhuaweicloud.com"]),
-        default="huaweicloud.com",
+        type=click.Choice(["myhuaweicloud.com", "huaweicloud.com"]),
+        default="myhuaweicloud.com",
     )
 
     # Auto-discover projects (no need to ask for project_id or region)
