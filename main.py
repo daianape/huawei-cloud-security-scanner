@@ -155,7 +155,6 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
         sk = creds_config.get("secret_key")
         if ak and sk:
             console.print("  [dim]Discovering project IDs for all regions...[/dim]")
-            from core.auth import HuaweiCloudAuth
             discovered = HuaweiCloudAuth.discover_projects(ak, sk, verify_ssl=cfg.get("verify_ssl", True))
             if discovered:
                 cfg["_discovered_projects"] = discovered
@@ -308,7 +307,6 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
     # Auto-discover projects (no need to ask for project_id or region)
     console.print()
     console.print("  [dim]Discovering available regions and projects...[/dim]")
-    from core.auth import HuaweiCloudAuth
     discovered = HuaweiCloudAuth.discover_projects(
         access_key, secret_key, domain_id=domain_id, verify_ssl=not no_verify_ssl
     )
