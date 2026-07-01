@@ -126,7 +126,10 @@ class HuaweiCloudAuth:
         if self._validate_credentials(credentials):
             logger.info("Single account authentication successful")
         else:
-            raise ConnectionError("Failed to validate credentials against Huawei Cloud API")
+            logger.warning(
+                "Could not validate credentials via API. "
+                "Proceeding with scan anyway - individual scanners will report errors if auth fails."
+            )
 
         target = ScanTarget(
             account_name=credentials.account_name,
@@ -291,14 +294,12 @@ class HuaweiCloudAuth:
             if not self.verify_ssl:
                 http_config.ignore_ssl_verification = True
 
-            # Use VPC API (regional) instead of IAM (global) for validation
-            endpoint = f"https://vpc.{creds.region}.myhuaweicloud.com"
-
+            # Use SDK's built-in region resolution
             vpc_client = (
                 VpcClient.new_builder()
                 .with_credentials(credentials)
                 .with_http_config(http_config)
-                .with_endpoint(endpoint)
+                .with_region(VpcRegion.value_of(creds.region))
                 .build()
             )
 
