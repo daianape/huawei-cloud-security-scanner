@@ -164,7 +164,9 @@ Editar `config/config.yaml` y completar:
 
 1. El `domain_id` (Account ID)
 2. El `project_id` de la region principal
-3. Los `project_id` de cada region en la seccion `regions`
+3. Los `project_id` de cada region en la seccion `regions` que quieras escanear
+
+**Las regiones con `project_id` vacio se ignoran automaticamente.** Solo completar las que tengan recursos.
 
 Ejemplo con regiones completadas:
 
@@ -176,11 +178,15 @@ project_id: "f521b5fa85c44e718d99e998d4ce7ea6"
 
 regions:
   - region: "la-south-2"
-    project_id: "f521b5fa85c44e718d99e998d4ce7ea6"
+    project_id: "f521b5fa85c44e718d99e998d4ce7ea6"    # completada - se escanea
   - region: "la-north-2"
-    project_id: "49137fe2a37d45ecb95921999e37b14a"
+    project_id: "49137fe2a37d45ecb95921999e37b14a"    # completada - se escanea
   - region: "ap-southeast-1"
-    project_id: "06791a33aed54779b2c29e3db294e227"
+    project_id: "06791a33aed54779b2c29e3db294e227"    # completada - se escanea
+  - region: "af-south-1"
+    project_id: ""                                     # vacia - se ignora
+  - region: "eu-west-0"
+    project_id: ""                                     # vacia - se ignora
 
 scanners:
   iam: true
@@ -197,7 +203,13 @@ output:
     - json
 ```
 
-> Solo necesitas completar las regiones donde tenes recursos. Las demas dejalaas con project_id vacio y seran ignoradas.
+### Comportamiento segun el comando
+
+| Comando | Que escanea |
+|---------|------------|
+| `python main.py scan --no-verify-ssl` | Solo la region principal (`region: "la-south-2"`) |
+| `python main.py scan --no-verify-ssl --regions all` | Todas las regiones con project_id completado |
+| `python main.py scan --no-verify-ssl --regions la-south-2,la-north-2` | Solo las regiones indicadas |
 
 ---
 
