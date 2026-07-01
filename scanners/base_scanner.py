@@ -75,6 +75,8 @@ class BaseScanner(ABC):
         Execute all checks for this scanner.
         Returns a list of findings.
         """
+        import time
+
         self.logger.info(
             f"Starting {self.service_name} scan for account: {self.account_name} "
             f"in region: {self.region}"
@@ -85,10 +87,28 @@ class BaseScanner(ABC):
             self._init_client()
             checks = self._get_checks()
 
-            for check_fn in checks:
+            for i, check_fn in enumerate(checks):
+                # Add delay between checks to avoid rate limiting
+                if i > 0:
+                    time.sleep(2)
+
                 try:
                     check_fn()
                 except Exception as e:
+                    error_msg = str(e)
+                    # Retry once if rate limited
+                    if "failed to reach the limit" in error_msg.lower() or "forbidden" in error_msg.lower():
+                        self.logger.warning(
+                            f"Rate limited on {check_fn.__name__}, "
+                            f"waiting 10s and retrying..."
+                        )
+                        time.sleep(10)
+                        try:
+                            check_fn()
+                            continue
+                        except Exception as retry_e:
+                            e = retry_e
+
                     self.logger.error(
                         f"Error running check {check_fn.__name__} "
                         f"in {self.service_name}: {e}"
