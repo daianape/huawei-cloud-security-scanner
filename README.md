@@ -8,7 +8,7 @@ Herramienta de evaluacion de seguridad para cuentas de Huawei Cloud. Escanea con
 - **Multi Region**: escanea una region, varias, o todas las regiones configuradas en una sola ejecucion
 - **Regiones custom/locales**: soporte para regiones no registradas en el SDK (ej: `sa-argentina-1` Buenos Aires) mediante fallback a endpoint manual
 - **28 Scanners de seguridad**: cobertura integral de IAM, Red, Compute, Storage, Logging y Gobernanza
-- **Dashboard HTML interactivo**: sidebar con navegacion, graficos de severidad, tabla de hallazgos filtrable
+- **Dashboard HTML interactivo**: sidebar con navegacion, graficos de severidad, tabla de hallazgos filtrable, vista detalle por servicio con cards de recursos individuales
 - **Multiples formatos de reporte**: HTML, JSON, CSV
 - **Credenciales seguras**: AK/SK se pasan por variables de entorno, nunca en archivos
 - **Solo lectura**: no crea, modifica ni elimina ningun recurso en tu cuenta
@@ -406,6 +406,61 @@ El scanner soporta regiones que no estan registradas en el SDK de Huawei Cloud (
 2. Si la region no esta registrada, usa `with_endpoint()` construyendo la URL: `https://SERVICE.REGION.myhuaweicloud.com`
 
 Esto permite escanear cualquier region futura sin necesidad de actualizar el SDK.
+
+## Dashboard HTML Interactivo
+
+El reporte principal es un dashboard HTML estatico (single-file, sin servidor) inspirado en AWS Service Screener. Se genera como `output/index.html` y se abre directamente en el navegador.
+
+### Arquitectura del Dashboard
+
+- **Single Page Application** con navegacion interna via JavaScript
+- **Chart.js** para graficos interactivos (doughnut de severidad, barras por servicio)
+- **Diseño responsivo** con sidebar colapsable en mobile
+- **Datos embebidos** como JSON dentro del HTML (portable, no requiere server)
+
+### Paginas y Secciones
+
+| Pagina | Descripcion |
+|--------|-------------|
+| **Home (INDEX)** | Vista ejecutiva con KPIs, graficos y cards de servicios |
+| **Findings** | Tabla completa de hallazgos con filtros, busqueda y export |
+| **Servicio (detalle)** | Vista drill-down por servicio con checks y recursos individuales |
+
+### Elementos Visuales
+
+- **Stat Cards** (KPIs): Services Scanned, Total Checks, Failed Findings, Passed, Critical+High, Errors
+- **Graficos**: Doughnut de severidad + Barras por servicio (solo findings fallidos)
+- **Service Cards**: Grid clickeable para navegar al detalle de cada servicio
+- **Tabla de Findings**: Ordenable, filtrable por servicio/severidad/status, con busqueda full-text
+- **Resource Cards**: En la vista detalle, cada recurso muestra sus checks con iconos pass/fail
+- **Barras de progreso**: En el summary, barras con % por severidad
+
+### Paleta de Colores
+
+| Elemento | Color | Codigo |
+|----------|-------|--------|
+| Sidebar | Dark Navy | `#232f3e` |
+| Headers de seccion | Yellow-Gold | `#f0ad4e` |
+| Critical | Purple | `#8e44ad` |
+| High/Fail | Red | `#e74c3c` |
+| Medium | Amber | `#f0ad4e` |
+| Low | Cyan | `#5bc0de` |
+| Pass/Info | Green | `#27ae60` / `#5cb85c` |
+| Links/Active | Blue | `#0073bb` |
+
+### Interactividad
+
+- Filtros combinados (servicio + severidad + status)
+- Busqueda full-text en tiempo real
+- Ordenamiento por columna (click en header)
+- Secciones colapsables (click en header dorado)
+- Tabs (Findings / Suppressed)
+- Export CSV desde el navegador
+- Copy to clipboard de la tabla
+- Filtro por cuenta (multi-account)
+- Sidebar responsive (hamburger menu en mobile)
+
+Para una guia paso a paso de como navegar el dashboard, ver [GUIA_DASHBOARD.md](GUIA_DASHBOARD.md).
 
 ## Documentacion Detallada
 
