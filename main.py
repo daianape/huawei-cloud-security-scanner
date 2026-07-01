@@ -299,39 +299,11 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
 
     access_key = click.prompt("  Access Key (AK)", type=str)
     secret_key = click.prompt("  Secret Key (SK)", type=str, hide_input=True)
-    domain_id = click.prompt(
-        "  Domain ID (Account ID from My Credentials)",
-        type=str,
-    )
-    cloud_domain = click.prompt(
-        "  Cloud domain",
-        type=click.Choice(["myhuaweicloud.com", "huaweicloud.com"]),
-        default="myhuaweicloud.com",
-    )
-
-    # Auto-discover projects (no need to ask for project_id or region)
     console.print()
-    console.print("  [dim]Discovering available regions and projects...[/dim]")
-    discovered = HuaweiCloudAuth.discover_projects(
-        access_key, secret_key, domain_id=domain_id, verify_ssl=not no_verify_ssl
-    )
-
-    if discovered:
-        regions_found = list(discovered.keys())
-        console.print(f"  [green]✓[/green] Found {len(regions_found)} regions: {', '.join(regions_found)}")
-        # Use first region as default
-        default_region = regions_found[0] if regions_found else "la-south-2"
-        project_id = discovered.get(default_region, "")
-    else:
-        console.print("  [yellow]⚠ Could not auto-discover projects. Enter manually:[/yellow]")
-        console.print("  [dim](Find Project ID in Huawei Console > My Credentials > API Credentials)[/dim]")
-        project_id = click.prompt("  Project ID", type=str)
-        default_region = "la-south-2"
-        discovered = {}
-
-    region = click.prompt("  Region", type=str, default=default_region)
-    if region in discovered:
-        project_id = discovered[region]
+    console.print("  [dim](Project ID: Huawei Console > My Credentials > API Credentials)[/dim]")
+    project_id = click.prompt("  Project ID", type=str)
+    region = click.prompt("  Region", type=str, default="la-south-2")
+    domain_id = click.prompt("  Domain ID (Account ID, para IAM checks)", type=str, default="")
 
     console.print()
     console.print("[green]✓[/green] Credentials received (in-memory only)")
@@ -340,7 +312,7 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
         "mode": "single",
         "region": region,
         "project_id": project_id,
-        "cloud_domain": cloud_domain,
+        "cloud_domain": "myhuaweicloud.com",
         "credentials": {
             "access_key": access_key,
             "secret_key": secret_key,
@@ -359,10 +331,6 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
             "formats": ["html", "json"],
         },
     }
-
-    # Store discovered projects for multi-region use
-    if discovered:
-        cfg["_discovered_projects"] = discovered
 
     return cfg
 
