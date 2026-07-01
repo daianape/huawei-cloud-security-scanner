@@ -61,9 +61,17 @@ class BaseScanner(ABC):
         Uses explicit endpoint for reliable connectivity.
         """
         endpoint = f"https://{self.service_name}.{self.region}.myhuaweicloud.com"
+
+        # Build credentials directly from target (same as test_connection.py)
+        direct_creds = BasicCredentials(
+            self.target.credentials.access_key,
+            self.target.credentials.secret_key,
+            self.target.project_id,
+        )
+
         builder = (
             client_class.new_builder()
-            .with_credentials(credentials)
+            .with_credentials(direct_creds)
             .with_endpoint(endpoint)
         )
         if self.http_config:
