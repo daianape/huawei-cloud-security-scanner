@@ -191,8 +191,14 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
     # Run scans (per account, per region)
     all_results: list[ScanResult] = []
 
-    for target in targets:
-        for region in regions_to_scan:
+    for region_idx, region in enumerate(regions_to_scan):
+        # Delay between regions to avoid rate limiting
+        if region_idx > 0:
+            import time
+            console.print("[dim]  Waiting 5s before next region...[/dim]")
+            time.sleep(5)
+
+        for target in targets:
             # Create a region-specific target
             region_target = _create_region_target(target, region, cfg)
             if region_target is None:
