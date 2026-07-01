@@ -9,12 +9,12 @@ from scanners.cts_scanner import CTSScanner
 from scanners.elb_scanner import ELBScanner
 
 AVAILABLE_SCANNERS = {
-    "iam": IAMScanner,
     "vpc": VPCScanner,
     "ecs": ECSScanner,
-    "obs": OBSScanner,
     "cts": CTSScanner,
     "elb": ELBScanner,
+    "obs": OBSScanner,
+    "iam": IAMScanner,
 }
 
 __all__ = [
