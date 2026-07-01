@@ -51,8 +51,17 @@ class CFWScanner(BaseScanner):
         try:
             request = ListFirewallListRequest()
             response = self.client.list_firewall_list(request)
-            firewalls = response.data or []
 
+            # Response structure varies by SDK version
+            firewalls = None
+            if hasattr(response, 'data') and response.data:
+                if hasattr(response.data, 'records'):
+                    firewalls = response.data.records
+                elif isinstance(response.data, list):
+                    firewalls = response.data
+                else:
+                    firewalls = [response.data]
+            
             if not firewalls:
                 self._add_finding(
                     check_id="CFW-01",
@@ -95,13 +104,22 @@ class CFWScanner(BaseScanner):
                     )
 
         except Exception as e:
-            if "not found" in str(e).lower() or "404" in str(e):
+            error_msg = str(e).lower()
+            if "not found" in error_msg or "404" in str(e):
                 self._add_finding(
                     check_id="CFW-01",
                     check_title="Cloud Firewall No Disponible",
                     severity=Severity.INFORMATIONAL,
                     status=Status.NOT_AVAILABLE,
                     description="Cloud Firewall no esta disponible en esta region/cuenta.",
+                )
+            elif "input" in error_msg or "struct" in error_msg or "400" in str(e):
+                self._add_finding(
+                    check_id="CFW-01",
+                    check_title="Cloud Firewall No Configurado",
+                    severity=Severity.INFORMATIONAL,
+                    status=Status.NOT_AVAILABLE,
+                    description="Cloud Firewall no esta configurado en esta cuenta.",
                 )
             else:
                 raise

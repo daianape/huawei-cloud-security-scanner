@@ -61,6 +61,9 @@ AVAILABLE_SCANNERS = {
     "tms": TMSScanner,
 }
 
+# Scanners that use GlobalCredentials and only need to run once (not per region)
+GLOBAL_SCANNERS = {"iam", "identity-center", "tms", "config"}
+
 __all__ = [
     "IAMScanner",
     "VPCScanner",

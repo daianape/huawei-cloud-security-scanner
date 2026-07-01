@@ -23,7 +23,7 @@ from core.config_loader import load_config
 from core.auth import HuaweiCloudAuth, ScanTarget
 from core.models import ScanResult, ScanSummary, Severity, Status
 from core.regions import ALL_REGION_CODES, get_region_name, HUAWEI_CLOUD_REGIONS
-from scanners import AVAILABLE_SCANNERS
+from scanners import AVAILABLE_SCANNERS, GLOBAL_SCANNERS
 from reports.html_report import HTMLReportGenerator
 from reports.json_report import JSONReportGenerator
 from reports.csv_report import CSVReportGenerator
@@ -188,9 +188,62 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
     )
     console.print()
 
-    # Run scans (per account, per region)
+    # Separate global vs regional scanners
+    global_scanners = [s for s in scanners_to_run if s in GLOBAL_SCANNERS]
+    regional_scanners = [s for s in scanners_to_run if s not in GLOBAL_SCANNERS]
+
+    # Run scans
     all_results: list[ScanResult] = []
 
+    # Run global scanners ONCE (not per region)
+    if global_scanners and targets:
+        target = targets[0]
+        console.print(
+            "[bold]Scanning global services[/bold] (run once, not per region)"
+        )
+
+        global_findings = []
+        scan_start = datetime.utcnow().isoformat()
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            for scanner_name in global_scanners:
+                if scanner_name not in AVAILABLE_SCANNERS:
+                    continue
+                task = progress.add_task(
+                    f"  Scanning {scanner_name.upper()}...", total=None
+                )
+                scanner_class = AVAILABLE_SCANNERS[scanner_name]
+                scanner = scanner_class(target)
+                findings = scanner.run()
+                for f in findings:
+                    f.region = "Global"
+                global_findings.extend(findings)
+                failed = sum(1 for f in findings if f.status == Status.FAIL)
+                progress.update(task, completed=True)
+                progress.remove_task(task)
+                console.print(
+                    f"  [{'red' if failed > 0 else 'green'}]"
+                    f"  {scanner_name.upper()}: "
+                    f"{len(findings)} checks, {failed} failed[/]"
+                )
+
+        scan_end = datetime.utcnow().isoformat()
+        summary = ScanSummary(
+            account_name=target.account_name,
+            account_id=target.domain_id or target.project_id,
+            region="Global",
+            scan_start=scan_start,
+            scan_end=scan_end,
+        )
+        summary.calculate_from_findings(global_findings)
+        all_results.append(ScanResult(summary=summary, findings=global_findings))
+        console.print()
+
+    # Run regional scanners per region
     for region_idx, region in enumerate(regions_to_scan):
         # Delay between regions to avoid rate limiting
         if region_idx > 0:
@@ -218,7 +271,7 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
                 TextColumn("[progress.description]{task.description}"),
                 console=console,
             ) as progress:
-                for scanner_name in scanners_to_run:
+                for scanner_name in regional_scanners:
                     if scanner_name not in AVAILABLE_SCANNERS:
                         console.print(
                             f"  [yellow]⚠ Unknown scanner: {scanner_name}[/yellow]"
