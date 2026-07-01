@@ -47,6 +47,22 @@ El `domain_id` y los `project_id` van en `config/config.yaml` (son identificador
 
 ## Comandos CLI
 
+### Sobre `--no-verify-ssl`
+
+Este flag deshabilita la verificacion de certificados SSL al conectar con las APIs de Huawei Cloud.
+
+**Cuando usarlo:**
+- Si tu red corporativa tiene un proxy/firewall que intercepta trafico HTTPS (genera errores de "self-signed certificate" o "CERTIFICATE_VERIFY_FAILED")
+- Si estas detras de un proxy empresarial que reemplaza certificados SSL
+
+**Cuando NO es necesario:**
+- Si ejecutas el scanner desde una red domestica sin proxy corporativo
+- Si no ves errores de certificado SSL al ejecutar sin el flag
+
+Si no lo necesitas, simplemente omitilo: `python main.py scan --regions all`
+
+### Ejemplos
+
 ```bash
 # Scan region principal
 python main.py scan --no-verify-ssl
@@ -57,7 +73,7 @@ python main.py scan --no-verify-ssl --regions la-south-2
 # Scan multiples regiones
 python main.py scan --no-verify-ssl --regions la-south-2,la-north-2
 
-# Scan TODAS las regiones configuradas
+# Scan TODAS las regiones configuradas (ignora las que tienen project_id vacio)
 python main.py scan --no-verify-ssl --regions all
 
 # Solo scanners especificos
@@ -65,6 +81,9 @@ python main.py scan --no-verify-ssl --scanners iam,vpc
 
 # Formatos de salida
 python main.py scan --no-verify-ssl --format html,json,csv
+
+# Sin proxy corporativo (no necesita --no-verify-ssl)
+python main.py scan --regions all
 
 # Listar regiones / scanners
 python main.py list-regions
