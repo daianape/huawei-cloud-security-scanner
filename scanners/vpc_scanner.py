@@ -55,14 +55,7 @@ class VPCScanner(BaseScanner):
     def _init_client(self) -> None:
         """Initialize VPC client."""
         credentials = self._get_basic_credentials()
-        builder = (
-            VpcClient.new_builder()
-            .with_credentials(credentials)
-            .with_endpoint(self._get_endpoint("vpc"))
-        )
-        if self.http_config:
-            builder.with_http_config(self.http_config)
-        self.client = builder.build()
+        self.client = self._build_client(VpcClient, VpcRegion, credentials)
 
     def _get_checks(self) -> list:
         """Return list of VPC checks to run."""

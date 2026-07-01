@@ -52,7 +52,22 @@ class BaseScanner(ABC):
 
     def _get_endpoint(self, service: str) -> str:
         """Build the endpoint URL for a service using the correct cloud domain."""
+        # Note: This is kept for reference but we use .with_region() for proper signing
         return f"https://{service}.{self.region}.{self.cloud_domain}"
+
+    def _build_client(self, client_class, region_class, credentials):
+        """
+        Build a service client with proper region and HTTP config.
+        Uses .with_region() for correct SDK signing.
+        """
+        builder = (
+            client_class.new_builder()
+            .with_credentials(credentials)
+            .with_region(region_class.value_of(self.region))
+        )
+        if self.http_config:
+            builder.with_http_config(self.http_config)
+        return builder.build()
 
     def run(self) -> list[Finding]:
         """
