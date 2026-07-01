@@ -1,13 +1,26 @@
-# Huawei Cloud SDK
+# Huawei Cloud SDK - Core
 huaweicloudsdkcore>=3.1.80
+
+# Huawei Cloud SDK - Services (existing)
 huaweicloudsdkiam>=3.1.80
 huaweicloudsdkvpc>=3.1.80
 huaweicloudsdkecs>=3.1.80
-huaweicloudsdkobs>=3.1.80
 huaweicloudsdkelb>=3.1.80
 huaweicloudsdkcts>=3.1.80
 huaweicloudsdkorganizations>=3.1.80
 huaweicloudsdkrms>=3.1.80
+
+# Huawei Cloud SDK - New scanners
+huaweicloudsdkidentitycenter>=3.1.80
+huaweicloudsdkrds>=3.1.80
+huaweicloudsdkdcs>=3.1.80
+huaweicloudsdknat>=3.1.80
+huaweicloudsdkeip>=3.1.80
+huaweicloudsdkwaf>=3.1.80
+huaweicloudsdkcfw>=3.1.80
+huaweicloudsdkevs>=3.1.80
+huaweicloudsdkkms>=3.1.80
+huaweicloudsdkcce>=3.1.80
 
 # Utilities
 pyyaml>=6.0
