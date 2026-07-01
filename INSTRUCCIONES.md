@@ -105,7 +105,6 @@ Las credenciales **NO van en ningun archivo**. Se configuran como variables de e
 ```cmd
 set HWCLOUD_AK=tu_access_key
 set HWCLOUD_SK=tu_secret_key
-set HWCLOUD_DOMAIN_ID=tu_domain_id
 ```
 
 ### Windows (PowerShell)
@@ -113,7 +112,6 @@ set HWCLOUD_DOMAIN_ID=tu_domain_id
 ```powershell
 $env:HWCLOUD_AK="tu_access_key"
 $env:HWCLOUD_SK="tu_secret_key"
-$env:HWCLOUD_DOMAIN_ID="tu_domain_id"
 ```
 
 ### Linux / Mac
@@ -121,7 +119,6 @@ $env:HWCLOUD_DOMAIN_ID="tu_domain_id"
 ```bash
 export HWCLOUD_AK=tu_access_key
 export HWCLOUD_SK=tu_secret_key
-export HWCLOUD_DOMAIN_ID=tu_domain_id
 ```
 
 ### Donde obtener cada valor
@@ -130,7 +127,8 @@ export HWCLOUD_DOMAIN_ID=tu_domain_id
 |----------|------------------|
 | `HWCLOUD_AK` | Archivo CSV descargado al crear el Access Key |
 | `HWCLOUD_SK` | Archivo CSV descargado al crear el Access Key |
-| `HWCLOUD_DOMAIN_ID` | Huawei Console > My Credentials > Account ID |
+
+> El `domain_id` y los `project_id` van en el archivo `config/config.yaml` (no son secretos, son identificadores publicos de tu cuenta).
 
 ### Por que variables de entorno?
 
@@ -162,19 +160,18 @@ copy config\config.yaml.example config\config.yaml
 
 Editar `config/config.yaml` y completar:
 
-1. El `domain_id` (Account ID)
-2. El `project_id` de la region principal
-3. Los `project_id` de cada region en la seccion `regions` que quieras escanear
+1. El `domain_id` (Account ID) — una sola vez
+2. Los `project_id` de cada region que quieras escanear
 
-**Las regiones con `project_id` vacio se ignoran automaticamente.** Solo completar las que tengan recursos.
+La primera region con `project_id` completado se usa como region principal por defecto.
+
+**Las regiones con `project_id` vacio se ignoran automaticamente.**
 
 Ejemplo con regiones completadas:
 
 ```yaml
 mode: "single"
 domain_id: "2e057fc2297549029c9e0dc90ec47251"
-region: "la-south-2"
-project_id: "f521b5fa85c44e718d99e998d4ce7ea6"
 
 regions:
   - region: "la-south-2"
@@ -184,8 +181,6 @@ regions:
   - region: "ap-southeast-1"
     project_id: "06791a33aed54779b2c29e3db294e227"    # completada - se escanea
   - region: "af-south-1"
-    project_id: ""                                     # vacia - se ignora
-  - region: "eu-west-0"
     project_id: ""                                     # vacia - se ignora
 
 scanners:
@@ -224,7 +219,6 @@ venv\Scripts\activate
 # 2. Configurar credenciales (hacer esto cada vez que abras una terminal nueva)
 set HWCLOUD_AK=tu_access_key
 set HWCLOUD_SK=tu_secret_key
-set HWCLOUD_DOMAIN_ID=tu_domain_id
 
 # 3. Ejecutar el scan
 python main.py scan --no-verify-ssl
@@ -446,7 +440,6 @@ Esto es intencional (seguridad). Cada vez que abras una terminal nueva,
 volver a configurar:
   set HWCLOUD_AK=tu_access_key
   set HWCLOUD_SK=tu_secret_key
-  set HWCLOUD_DOMAIN_ID=tu_domain_id
 ```
 
 ---

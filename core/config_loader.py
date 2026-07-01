@@ -83,13 +83,21 @@ def _load_credentials_from_env(config: dict) -> dict:
     if sk:
         config["credentials"]["secret_key"] = sk
 
-    # Domain ID from env (optional, overrides config)
-    env_domain = os.environ.get("HWCLOUD_DOMAIN_ID", "")
-    if env_domain:
-        config["credentials"]["domain_id"] = env_domain
-    elif not config["credentials"].get("domain_id"):
-        # Try from config top-level domain_id
-        config["credentials"]["domain_id"] = config.get("domain_id", "")
+    # Domain ID: from config file (not env var)
+    domain_id = config.get("domain_id", "")
+    config["credentials"]["domain_id"] = domain_id
+
+    # Resolve region and project_id from regions list
+    # Use the first region with a non-empty project_id as default
+    if not config.get("region") or not config.get("project_id"):
+        regions = config.get("regions", [])
+        for r in regions:
+            if r.get("project_id"):
+                if not config.get("region"):
+                    config["region"] = r["region"]
+                if not config.get("project_id"):
+                    config["project_id"] = r["project_id"]
+                break
 
     return config
 
@@ -98,12 +106,14 @@ def _apply_env_overrides(config: dict) -> dict:
     """Apply optional environment variable overrides for region/project."""
     env_project = os.environ.get("HWCLOUD_PROJECT_ID")
     env_region = os.environ.get("HWCLOUD_REGION")
+    env_domain = os.environ.get("HWCLOUD_DOMAIN_ID")
 
     if env_project:
         config["project_id"] = env_project
-
     if env_region:
         config["region"] = env_region
+    if env_domain:
+        config["credentials"]["domain_id"] = env_domain
 
     return config
 

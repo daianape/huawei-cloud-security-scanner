@@ -24,12 +24,11 @@ pip install -r requirements.txt
 
 # 2. Configurar regiones
 copy config\config.yaml.example config\config.yaml
-# Editar config.yaml: completar domain_id y project_id de tus regiones
+# Editar config.yaml: completar domain_id y project_ids de tus regiones
 
 # 3. Configurar credenciales (variables de entorno)
 set HWCLOUD_AK=tu_access_key
 set HWCLOUD_SK=tu_secret_key
-set HWCLOUD_DOMAIN_ID=tu_domain_id
 
 # 4. Ejecutar
 python main.py scan --no-verify-ssl
@@ -43,9 +42,8 @@ Las credenciales se pasan **exclusivamente por variables de entorno** por seguri
 |----------|-------------|-------------|
 | `HWCLOUD_AK` | Access Key | Si |
 | `HWCLOUD_SK` | Secret Key | Si |
-| `HWCLOUD_DOMAIN_ID` | Account ID (para IAM checks) | Recomendada |
 
-El archivo `config.yaml` solo contiene regiones, project IDs y configuracion de scanners. **Nunca credenciales.**
+El `domain_id` y los `project_id` van en `config/config.yaml` (son identificadores publicos, no secretos).
 
 ## Comandos CLI
 

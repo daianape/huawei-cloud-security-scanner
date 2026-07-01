@@ -1,17 +1,14 @@
 # ============================================================
 # Huawei Cloud Security Scanner - Configuracion
 # ============================================================
-# Este archivo contiene la configuracion de regiones y servicios.
-# Las credenciales (AK/SK) se pasan por variables de entorno por seguridad.
 #
-# AUTENTICACION:
-#   Antes de ejecutar el scanner, configurar las variables de entorno:
+# AUTENTICACION (variables de entorno, NO van en este archivo):
 #
-#   Windows (CMD):
+#   Windows CMD:
 #     set HWCLOUD_AK=tu_access_key
 #     set HWCLOUD_SK=tu_secret_key
 #
-#   Windows (PowerShell):
+#   Windows PowerShell:
 #     $env:HWCLOUD_AK="tu_access_key"
 #     $env:HWCLOUD_SK="tu_secret_key"
 #
@@ -24,28 +21,23 @@
 # Modo de escaneo: "single" o "multi"
 mode: "single"
 
-# Domain ID (Account ID) - necesario para checks de IAM
+# Domain ID (Account ID)
 # Obtener desde: Huawei Console > My Credentials > Account ID
 domain_id: ""
 
 # === REGIONES ===
-# Region principal (se usa si no se especifica --regions)
-region: "la-south-2"
-
-# Project ID de la region principal
-# Obtener desde: Huawei Console > My Credentials > API Credentials
-project_id: ""
-
-# Listado de todas las regiones disponibles con sus Project IDs.
 # Completar el project_id de las regiones que quieras escanear.
 # Las regiones con project_id vacio seran ignoradas al usar --regions all.
+# La PRIMERA region con project_id se usa como region principal por defecto.
+#
+# Obtener Project IDs desde: Huawei Console > My Credentials > API Credentials
 #
 # Para agregar una nueva region:
 #   1. Ir a Huawei Console > My Credentials > API Credentials
 #   2. Copiar el Project ID de la nueva region
 #   3. Agregar una entrada al listado con el formato:
-#      - region: "codigo-de-region"
-#        project_id: "el-project-id"
+#        - region: "codigo-de-region"
+#          project_id: "el-project-id"
 #
 regions:
   # Latin America
