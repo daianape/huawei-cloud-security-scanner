@@ -89,12 +89,24 @@ regions:
 # === SCANNERS ===
 # Habilitar/deshabilitar scanners individuales
 scanners:
+  # Existentes
   iam: true
   vpc: true
   ecs: true
   obs: true
   cts: true
   elb: true
+  # Nuevos
+  identity-center: true
+  rds: true
+  dcs: true
+  nat: true
+  eip: true
+  waf: true
+  cfw: true
+  evs: true
+  kms: true
+  cce: true
 
 # === OUTPUT ===
 output:
