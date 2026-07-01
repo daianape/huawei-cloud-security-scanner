@@ -321,6 +321,7 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
         project_id = discovered.get(default_region, "")
     else:
         console.print("  [yellow]⚠ Could not auto-discover projects. Enter manually:[/yellow]")
+        console.print("  [dim](Find Project ID in Huawei Console > My Credentials > API Credentials)[/dim]")
         project_id = click.prompt("  Project ID", type=str)
         default_region = "la-south-2"
         discovered = {}
