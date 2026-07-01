@@ -304,15 +304,43 @@ El dashboard incluye:
 
 | Formato | Archivo | Uso |
 |---------|---------|-----|
-| HTML | `output/index.html` | Dashboard visual |
-| JSON | `output/scan_report_FECHA.json` | Integracion con SIEM |
-| CSV | `output/scan_findings_FECHA.csv` | Analisis en Excel |
+| HTML | `output/index.html` | Dashboard visual interactivo |
+| JSON | `output/scan_report_FECHA.json` | Integracion con SIEM, automatizacion |
+| CSV | `output/scan_findings_FECHA.csv` | Analisis en Excel, filtros, pivots |
 
-Para generar todos los formatos:
+El config.yaml.example ya incluye los 3 formatos por defecto. Si solo queres algunos, editá la seccion `output.formats`:
+
+```yaml
+output:
+  directory: "./output"
+  formats:
+    - html
+    - json
+    - csv
+```
+
+Tambien podes elegir formatos desde la linea de comandos (override del config):
 
 ```bash
+# Solo HTML
+python main.py scan --no-verify-ssl --format html
+
+# Solo CSV (rapido, sin generar dashboard)
+python main.py scan --no-verify-ssl --format csv
+
+# Todos
 python main.py scan --no-verify-ssl --format html,json,csv
 ```
+
+### CSV en Excel
+
+El archivo CSV se genera con encoding UTF-8 BOM, compatible con Excel. Columnas:
+
+- account_name, account_id, region
+- service, category, check_id, check_title
+- severity, status
+- description, resource_id, resource_name
+- remediation, reference_url, timestamp
 
 ---
 

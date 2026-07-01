@@ -130,3 +130,4 @@ output:
   formats:
     - html
     - json
+    - csv
