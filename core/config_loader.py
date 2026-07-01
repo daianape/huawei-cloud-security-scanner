@@ -1,8 +1,17 @@
 """
 Huawei Cloud Security Scanner - Configuration Loader
 
-Loads and validates the scanner configuration from YAML files.
-Supports environment variable override for sensitive values.
+Loads scanner configuration from YAML file (regions, services, output).
+Credentials (AK/SK) MUST be provided via environment variables for security.
+
+Environment variables (REQUIRED):
+  - HWCLOUD_AK: Access Key
+  - HWCLOUD_SK: Secret Key
+
+Environment variables (OPTIONAL - override config file):
+  - HWCLOUD_DOMAIN_ID: Domain ID (Account ID)
+  - HWCLOUD_PROJECT_ID: Project ID (overrides config file)
+  - HWCLOUD_REGION: Region (overrides config file)
 """
 
 import os
@@ -19,19 +28,13 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config" / "config.yaml"
 
 def load_config(config_path: Optional[str] = None) -> dict:
     """
-    Load configuration from YAML file.
-    
-    Priority:
-    1. Explicit path passed as argument
-    2. Environment variable HWCLOUD_SCANNER_CONFIG
-    3. Default: ./config/config.yaml
-    
-    Environment variables can override credentials:
-    - HWCLOUD_AK: Access Key
-    - HWCLOUD_SK: Secret Key
-    - HWCLOUD_PROJECT_ID: Project ID
-    - HWCLOUD_DOMAIN_ID: Domain ID
-    - HWCLOUD_REGION: Region
+    Load configuration from YAML file and environment variables.
+
+    - Config file: regions, project_ids, scanners, output settings
+    - Environment variables: credentials (AK/SK), domain_id
+
+    Priority for credentials: Environment variables (required)
+    Priority for other settings: ENV > config file
     """
     # Resolve config file path
     if config_path:
@@ -44,7 +47,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
     if not path.exists():
         raise FileNotFoundError(
             f"Configuration file not found: {path}\n"
-            f"Copy config.yaml.example to config.yaml and fill in your credentials."
+            f"Copy config.yaml.example to config.yaml and configure your regions."
         )
 
     logger.info(f"Loading configuration from: {path}")
@@ -52,7 +55,10 @@ def load_config(config_path: Optional[str] = None) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    # Override with environment variables if present
+    # Load credentials from environment variables
+    config = _load_credentials_from_env(config)
+
+    # Apply optional env overrides for region/project
     config = _apply_env_overrides(config)
 
     # Validate configuration
@@ -61,29 +67,40 @@ def load_config(config_path: Optional[str] = None) -> dict:
     return config
 
 
-def _apply_env_overrides(config: dict) -> dict:
-    """Apply environment variable overrides to config."""
-    env_ak = os.environ.get("HWCLOUD_AK")
-    env_sk = os.environ.get("HWCLOUD_SK")
-    env_project = os.environ.get("HWCLOUD_PROJECT_ID")
-    env_domain = os.environ.get("HWCLOUD_DOMAIN_ID")
-    env_region = os.environ.get("HWCLOUD_REGION")
+def _load_credentials_from_env(config: dict) -> dict:
+    """
+    Load AK/SK from environment variables.
+    These are REQUIRED and must be set before running the scanner.
+    """
+    ak = os.environ.get("HWCLOUD_AK", "")
+    sk = os.environ.get("HWCLOUD_SK", "")
 
-    if env_ak or env_sk:
-        if "credentials" not in config:
-            config["credentials"] = {}
-        if env_ak:
-            config["credentials"]["access_key"] = env_ak
-        if env_sk:
-            config["credentials"]["secret_key"] = env_sk
+    if "credentials" not in config:
+        config["credentials"] = {}
+
+    if ak:
+        config["credentials"]["access_key"] = ak
+    if sk:
+        config["credentials"]["secret_key"] = sk
+
+    # Domain ID from env (optional, overrides config)
+    env_domain = os.environ.get("HWCLOUD_DOMAIN_ID", "")
+    if env_domain:
+        config["credentials"]["domain_id"] = env_domain
+    elif not config["credentials"].get("domain_id"):
+        # Try from config top-level domain_id
+        config["credentials"]["domain_id"] = config.get("domain_id", "")
+
+    return config
+
+
+def _apply_env_overrides(config: dict) -> dict:
+    """Apply optional environment variable overrides for region/project."""
+    env_project = os.environ.get("HWCLOUD_PROJECT_ID")
+    env_region = os.environ.get("HWCLOUD_REGION")
 
     if env_project:
         config["project_id"] = env_project
-
-    if env_domain:
-        if "credentials" not in config:
-            config["credentials"] = {}
-        config["credentials"]["domain_id"] = env_domain
 
     if env_region:
         config["region"] = env_region
@@ -98,33 +115,43 @@ def _validate_config(config: dict) -> None:
     if mode == "single":
         creds = config.get("credentials", {})
         if not creds.get("access_key"):
-            raise ValueError("Missing 'credentials.access_key' in config (or set HWCLOUD_AK)")
+            raise ValueError(
+                "Credenciales no configuradas.\n\n"
+                "Configurar variables de entorno antes de ejecutar:\n"
+                "  Windows CMD:        set HWCLOUD_AK=tu_access_key\n"
+                "                      set HWCLOUD_SK=tu_secret_key\n"
+                "  Windows PowerShell: $env:HWCLOUD_AK=\"tu_access_key\"\n"
+                "                      $env:HWCLOUD_SK=\"tu_secret_key\"\n"
+                "  Linux/Mac:          export HWCLOUD_AK=tu_access_key\n"
+                "                      export HWCLOUD_SK=tu_secret_key"
+            )
         if not creds.get("secret_key"):
-            raise ValueError("Missing 'credentials.secret_key' in config (or set HWCLOUD_SK)")
+            raise ValueError(
+                "Falta el Secret Key (SK).\n"
+                "Configurar: set HWCLOUD_SK=tu_secret_key"
+            )
         if not config.get("project_id"):
-            raise ValueError("Missing 'project_id' in config (or set HWCLOUD_PROJECT_ID)")
+            raise ValueError(
+                "Falta 'project_id' en config.yaml.\n"
+                "Obtener desde: Huawei Console > My Credentials > API Credentials"
+            )
 
     elif mode == "multi":
         multi = config.get("multi_account", {})
         mgmt = multi.get("management_account", {})
         if not mgmt.get("access_key") or not mgmt.get("secret_key"):
-            raise ValueError("Multi-account mode requires management_account credentials")
+            raise ValueError("Multi-account mode requires management_account credentials via env vars")
         if not mgmt.get("domain_id"):
             raise ValueError("Multi-account mode requires management_account.domain_id")
         targets = multi.get("target_accounts", [])
         if not targets:
             raise ValueError("Multi-account mode requires at least one target_account")
-        for i, target in enumerate(targets):
-            if not target.get("domain_id"):
-                raise ValueError(f"target_accounts[{i}] missing 'domain_id'")
-            if not target.get("project_id"):
-                raise ValueError(f"target_accounts[{i}] missing 'project_id'")
 
     else:
         raise ValueError(f"Unknown mode: '{mode}'. Use 'single' or 'multi'.")
 
     # Validate region
     if not config.get("region"):
-        raise ValueError("Missing 'region' in config (or set HWCLOUD_REGION)")
+        raise ValueError("Falta 'region' en config.yaml (o set HWCLOUD_REGION)")
 
     logger.info(f"Configuration validated. Mode: {mode}")

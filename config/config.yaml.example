@@ -1,58 +1,102 @@
-# Huawei Cloud Security Scanner - Configuration
-# Copy this file to config.yaml and fill in your credentials
+# ============================================================
+# Huawei Cloud Security Scanner - Configuracion
+# ============================================================
+# Este archivo contiene la configuracion de regiones y servicios.
+# Las credenciales (AK/SK) se pasan por variables de entorno por seguridad.
+#
+# AUTENTICACION:
+#   Antes de ejecutar el scanner, configurar las variables de entorno:
+#
+#   Windows (CMD):
+#     set HWCLOUD_AK=tu_access_key
+#     set HWCLOUD_SK=tu_secret_key
+#
+#   Windows (PowerShell):
+#     $env:HWCLOUD_AK="tu_access_key"
+#     $env:HWCLOUD_SK="tu_secret_key"
+#
+#   Linux/Mac:
+#     export HWCLOUD_AK=tu_access_key
+#     export HWCLOUD_SK=tu_secret_key
+#
+# ============================================================
 
-# Authentication mode: "single" or "multi"
+# Modo de escaneo: "single" o "multi"
 mode: "single"
 
-# Region principal (e.g., la-south-2, ap-southeast-1, cn-north-4)
+# Domain ID (Account ID) - necesario para checks de IAM
+# Obtener desde: Huawei Console > My Credentials > Account ID
+domain_id: ""
+
+# === REGIONES ===
+# Region principal (se usa si no se especifica --regions)
 region: "la-south-2"
 
-# Project ID (required for most API calls - corresponds to the main region)
-project_id: "your-project-id"
+# Project ID de la region principal
+# Obtener desde: Huawei Console > My Credentials > API Credentials
+project_id: ""
 
-# === Multi Region ===
-# List of regions to scan. If omitted or empty, only 'region' above is scanned.
-# Use "all" to scan all available Huawei Cloud regions automatically.
-# Each region requires its own project_id.
-# regions:
-#   - region: "la-south-2"
-#     project_id: "project-id-la-south-2"
-#   - region: "ap-southeast-1"
-#     project_id: "project-id-ap-southeast-1"
-#   - region: "cn-north-4"
-#     project_id: "project-id-cn-north-4"
-
-# === Single Account Mode ===
-credentials:
-  access_key: "your-ak"
-  secret_key: "your-sk"
-
-# === Multi Account Mode ===
-# Uncomment and configure for multi-account scanning
-# multi_account:
-#   # Account from which the scanner runs (must have Organizations access)
-#   management_account:
-#     access_key: "management-ak"
-#     secret_key: "management-sk"
-#     domain_id: "management-domain-id"
+# Listado de todas las regiones disponibles con sus Project IDs.
+# Completar el project_id de las regiones que quieras escanear.
+# Las regiones con project_id vacio seran ignoradas al usar --regions all.
 #
-#   # Agencies created in target accounts that trust the management account
-#   target_accounts:
-#     - account_name: "Production"
-#       domain_id: "target-domain-id-1"
-#       agency_name: "security-scanner-agency"
-#       project_id: "target-project-id-1"
-#       region: "la-south-2"
+# Para agregar una nueva region:
+#   1. Ir a Huawei Console > My Credentials > API Credentials
+#   2. Copiar el Project ID de la nueva region
+#   3. Agregar una entrada al listado con el formato:
+#      - region: "codigo-de-region"
+#        project_id: "el-project-id"
 #
-#     - account_name: "Development"
-#       domain_id: "target-domain-id-2"
-#       agency_name: "security-scanner-agency"
-#       project_id: "target-project-id-2"
-#       region: "la-south-2"
+regions:
+  # Latin America
+  - region: "la-south-2"
+    project_id: ""          # LA-Santiago (Chile)
+  - region: "la-north-2"
+    project_id: ""          # LA-Mexico City
 
-# === Scanner Configuration ===
+  # South America
+  - region: "sa-brazil-1"
+    project_id: ""          # Sao Paulo (Brasil)
+
+  # Asia Pacific
+  - region: "ap-southeast-1"
+    project_id: ""          # Hong Kong
+  - region: "ap-southeast-2"
+    project_id: ""          # Bangkok (Thailand)
+  - region: "ap-southeast-3"
+    project_id: ""          # Singapore
+  - region: "ap-southeast-4"
+    project_id: ""          # Jakarta (Indonesia)
+  - region: "my-kualalumpur-1"
+    project_id: ""          # Kuala Lumpur (Malaysia)
+
+  # Europe
+  - region: "eu-west-0"
+    project_id: ""          # Paris (France)
+  - region: "eu-west-101"
+    project_id: ""          # Dublin (Ireland)
+
+  # Middle East
+  - region: "tr-west-1"
+    project_id: ""          # Istanbul (Turkey)
+  - region: "me-east-1"
+    project_id: ""          # Riyadh (Saudi Arabia)
+
+  # Africa
+  - region: "af-south-1"
+    project_id: ""          # Johannesburg (South Africa)
+
+  # China (requiere cuenta China separada, normalmente no aplica)
+  # - region: "cn-north-4"
+  #   project_id: ""        # Beijing
+  # - region: "cn-east-3"
+  #   project_id: ""        # Shanghai
+  # - region: "cn-south-1"
+  #   project_id: ""        # Guangzhou
+
+# === SCANNERS ===
+# Habilitar/deshabilitar scanners individuales
 scanners:
-  # Enable/disable specific scanners
   iam: true
   vpc: true
   ecs: true
@@ -60,11 +104,9 @@ scanners:
   cts: true
   elb: true
 
-# === Output Configuration ===
+# === OUTPUT ===
 output:
-  # Output directory for reports
   directory: "./output"
-  # Formats: json, html, csv
   formats:
-    - json
     - html
+    - json

@@ -8,13 +8,15 @@ Guia completa paso a paso para configurar y ejecutar el scanner de seguridad en 
 
 1. [Requisitos Previos](#1-requisitos-previos)
 2. [Instalacion](#2-instalacion)
-3. [Configuracion Single Account](#3-configuracion-single-account)
-4. [Configuracion Multi Account](#4-configuracion-multi-account)
+3. [Configuracion de Credenciales (Variables de Entorno)](#3-configuracion-de-credenciales)
+4. [Configuracion de Regiones (config.yaml)](#4-configuracion-de-regiones)
 5. [Ejecucion del Scanner](#5-ejecucion-del-scanner)
 6. [Visualizacion de Reportes](#6-visualizacion-de-reportes)
 7. [Exportacion de Informes](#7-exportacion-de-informes)
-8. [Sobre Recursos Creados](#8-sobre-recursos-creados)
-9. [Troubleshooting](#9-troubleshooting)
+8. [Agregar Nuevas Regiones](#8-agregar-nuevas-regiones)
+9. [Modo Multi Account](#9-modo-multi-account)
+10. [Sobre Recursos Creados](#10-sobre-recursos-creados)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -25,27 +27,14 @@ Guia completa paso a paso para configurar y ejecutar el scanner de seguridad en 
 - Access Key (AK) y Secret Key (SK) con permisos de lectura
 - Conectividad a internet (para acceder a las APIs de Huawei Cloud)
 
-### Permisos minimos requeridos
+### Permisos del usuario IAM
 
-La forma mas simple y recomendada es asignar el rol **Tenant Guest** al usuario. Este rol otorga permisos de **solo lectura a todos los servicios** de la cuenta, que es exactamente lo que necesita el scanner.
+La forma mas simple es asignar el rol **Tenant Guest** + **IAM ReadOnlyAccess** al usuario:
 
-| Opcion | Rol | Alcance |
-|--------|-----|---------|
-| **Recomendada (simple)** | `Tenant Guest` | Lectura a todos los servicios |
-| Alternativa (granular) | Roles individuales por servicio | Solo lo necesario |
-
-Si preferis la opcion granular en lugar de Tenant Guest:
-
-| Servicio | Rol/Politica |
-|----------|-------------|
-| IAM | Security Administrator (ReadOnly) |
-| VPC | VPC ReadOnlyAccess |
-| ECS | ECS ReadOnlyAccess |
-| OBS | OBS ReadOnlyAccess |
-| CTS | CTS ReadOnlyAccess |
-| ELB | ELB ReadOnlyAccess |
-
-> **Importante:** El rol `Tenant Guest` es suficiente para todo el scanner. No modifica ni crea nada. Solo lee.
+| Rol | Que permite |
+|-----|------------|
+| `Tenant Guest` | Lectura de todos los servicios (VPC, ECS, OBS, CTS, ELB) |
+| `IAM ReadOnlyAccess` | Lectura de usuarios, grupos, politicas, MFA |
 
 ### Como crear el usuario IAM para el scanner
 
@@ -60,8 +49,8 @@ Si preferis la opcion granular en lugar de Tenant Guest:
 
 1. En la lista de grupos, click en `security-auditors`
 2. Tab **Permissions** > **Authorize**
-3. Buscar y seleccionar: **Tenant Guest**
-4. Seleccionar el **Scope**: **All resources** (para que aplique en todas las regiones)
+3. Buscar y seleccionar: **Tenant Guest** y **IAM ReadOnlyAccess**
+4. Seleccionar el **Scope**: **All resources**
 5. Click en **OK**
 
 **Paso 3: Crear el usuario IAM**
@@ -74,11 +63,7 @@ Si preferis la opcion granular en lugar de Tenant Guest:
 3. Click en **Next**
 4. Asignar al grupo `security-auditors`
 5. Click en **Create**
-6. **Descargar las credenciales** (AK/SK) - solo se muestran una vez
-
-**Paso 4: Usar las credenciales en el scanner**
-
-Copiar el Access Key (AK) y Secret Key (SK) descargados al `config/config.yaml` o configurarlos como variables de entorno.
+6. **Descargar las credenciales** (AK/SK) - se muestran una sola vez
 
 ---
 
@@ -109,222 +94,94 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### (Opcional) Instalar SDK de OBS
+---
 
-Para escanear buckets de OBS, instalar el SDK adicional:
+## 3. Configuracion de Credenciales
+
+Las credenciales **NO van en ningun archivo**. Se configuran como variables de entorno antes de ejecutar el scanner. Al cerrar la terminal, desaparecen.
+
+### Windows (CMD)
+
+```cmd
+set HWCLOUD_AK=tu_access_key
+set HWCLOUD_SK=tu_secret_key
+set HWCLOUD_DOMAIN_ID=tu_domain_id
+```
+
+### Windows (PowerShell)
+
+```powershell
+$env:HWCLOUD_AK="tu_access_key"
+$env:HWCLOUD_SK="tu_secret_key"
+$env:HWCLOUD_DOMAIN_ID="tu_domain_id"
+```
+
+### Linux / Mac
 
 ```bash
-pip install esdk-obs-python
+export HWCLOUD_AK=tu_access_key
+export HWCLOUD_SK=tu_secret_key
+export HWCLOUD_DOMAIN_ID=tu_domain_id
 ```
+
+### Donde obtener cada valor
+
+| Variable | Donde encontrarla |
+|----------|------------------|
+| `HWCLOUD_AK` | Archivo CSV descargado al crear el Access Key |
+| `HWCLOUD_SK` | Archivo CSV descargado al crear el Access Key |
+| `HWCLOUD_DOMAIN_ID` | Huawei Console > My Credentials > Account ID |
+
+### Por que variables de entorno?
+
+- No quedan escritas en ningun archivo del proyecto
+- No se pueden commitear accidentalmente a Git
+- Desaparecen al cerrar la terminal
+- Es el metodo recomendado por la industria para credenciales
 
 ---
 
-## 3. Configuracion Single Account
+## 4. Configuracion de Regiones
 
-Usa este modo cuando quieras escanear **una sola cuenta** de Huawei Cloud.
+El archivo `config/config.yaml` contiene la configuracion de regiones, scanners y output. **No contiene credenciales.**
 
-### Opcion A: Modo interactivo (recomendado)
-
-La forma mas segura. Las credenciales se ingresan por prompt y solo existen en memoria durante la ejecucion:
-
-```bash
-python main.py scan --interactive
-```
-
-Te va a pedir:
-```
-  Access Key (AK): XXXXXXXXXXXXXXXXXX
-  Secret Key (SK): (oculto, no se muestra en pantalla)
-  Project ID: abc123def456...
-  Region [la-south-2]: la-south-2
-```
-
-Las credenciales **no quedan guardadas en ningun archivo**. Al terminar la ejecucion, desaparecen.
-
-### Opcion B: Variables de entorno
-
-Util para automatizacion sin archivos en disco:
-
-```bash
-# Windows
-set HWCLOUD_AK=tu_access_key
-set HWCLOUD_SK=tu_secret_key
-set HWCLOUD_PROJECT_ID=tu_project_id
-set HWCLOUD_REGION=la-south-2
-
-# Linux/Mac
-export HWCLOUD_AK=tu_access_key
-export HWCLOUD_SK=tu_secret_key
-export HWCLOUD_PROJECT_ID=tu_project_id
-export HWCLOUD_REGION=la-south-2
-
-# Luego ejecutar normalmente
-python main.py scan
-```
-
-### Opcion C: Archivo config.yaml
-
-Para ejecuciones repetidas o automatizadas. **Proteger el archivo con permisos adecuados.**
-
-#### Paso 1: Obtener credenciales
-
-1. Ingresa a la consola de Huawei Cloud: https://console.huaweicloud.com
-2. Click en tu nombre de usuario (esquina superior derecha) > **My Credentials**
-3. Ve a la seccion **Access Keys**
-4. Click en **Create Access Key**
-5. Guarda el AK y SK que se descargan
-
-### Paso 2: Obtener Project ID
-
-1. En la consola, click en tu nombre de usuario > **My Credentials**
-2. En la seccion **API Credentials** vas a ver el **Project ID** de tu region
-3. Copiar el Project ID correspondiente a la region que quieras escanear
-
-### Paso 3: Crear archivo de configuracion
+### Paso 1: Copiar el archivo de ejemplo
 
 ```bash
 copy config\config.yaml.example config\config.yaml
 ```
 
-Editar `config/config.yaml`:
+### Paso 2: Obtener los Project IDs
+
+1. Ingresa a la consola de Huawei Cloud
+2. Click en tu nombre de usuario > **My Credentials**
+3. Seccion **API Credentials** - veras una tabla con Region y Project ID
+4. Copiar el Project ID de cada region que quieras escanear
+
+### Paso 3: Completar el config.yaml
+
+Editar `config/config.yaml` y completar:
+
+1. El `domain_id` (Account ID)
+2. El `project_id` de la region principal
+3. Los `project_id` de cada region en la seccion `regions`
+
+Ejemplo con regiones completadas:
 
 ```yaml
-# Modo single account
 mode: "single"
-
-# Region a escanear (ejemplos: la-south-2, ap-southeast-1, cn-north-4)
+domain_id: "2e057fc2297549029c9e0dc90ec47251"
 region: "la-south-2"
+project_id: "f521b5fa85c44e718d99e998d4ce7ea6"
 
-# Project ID de la region
-project_id: "abc123def456..."
-
-# Credenciales
-credentials:
-  access_key: "TU_ACCESS_KEY"
-  secret_key: "TU_SECRET_KEY"
-
-# Scanners a ejecutar (true/false)
-scanners:
-  iam: true
-  vpc: true
-  ecs: true
-  obs: true
-  cts: true
-  elb: true
-
-# Output
-output:
-  directory: "./output"
-  formats:
-    - html
-    - json
-```
-
-### Configuracion Multi Region (opcional)
-
-Para escanear multiples regiones en una sola ejecucion, agregar la seccion `regions` al config:
-
-```yaml
-# Escanear multiples regiones (cada una con su project_id)
 regions:
   - region: "la-south-2"
-    project_id: "project-id-region-1"
+    project_id: "f521b5fa85c44e718d99e998d4ce7ea6"
+  - region: "la-north-2"
+    project_id: "49137fe2a37d45ecb95921999e37b14a"
   - region: "ap-southeast-1"
-    project_id: "project-id-region-2"
-  - region: "cn-north-4"
-    project_id: "project-id-region-3"
-```
+    project_id: "06791a33aed54779b2c29e3db294e227"
 
-> **Nota:** Cada region tiene su propio Project ID. Lo podes obtener desde My Credentials > API Credentials en la consola, seleccionando la region correspondiente.
-
-Si no configuras la seccion `regions`, el scanner usa la region unica definida en `region:`.
-
----
-
-## 4. Configuracion Multi Account
-
-Usa este modo cuando necesites escanear **multiples cuentas** de Huawei Cloud desde una cuenta central de auditoria.
-
-### Concepto: IAM Agencies
-
-Huawei Cloud usa **Agencies** para delegar acceso entre cuentas (equivalente a AWS AssumeRole). El flujo es:
-
-```
-Cuenta de Auditoria (Management)
-         │
-         │ Assume Agency
-         ▼
-┌─────────────────┐
-│ Cuenta Target A │  ← Agency creada que confia en la cuenta management
-│ Cuenta Target B │
-│ Cuenta Target C │
-└─────────────────┘
-```
-
-### Paso 1: Crear Agency en cada cuenta target
-
-En **cada cuenta que quieras escanear**, crear una Agency:
-
-1. Ingresa a la consola de la cuenta target
-2. Ve a **IAM > Agencies**
-3. Click en **Create Agency**
-4. Configurar:
-   - **Agency Name**: `security-scanner-agency`
-   - **Agency Type**: Account
-   - **Delegating Account**: ingresar el **Domain ID** de tu cuenta de auditoria
-   - **Validity Period**: Unlimited (o definir un periodo)
-   - **Permissions**: asignar los roles de solo lectura listados en requisitos
-5. Click en **OK**
-
-### Paso 2: Obtener datos de cada cuenta target
-
-Para cada cuenta target, anotar:
-- **Domain ID**: My Credentials > Account ID (Domain ID)
-- **Project ID**: My Credentials > API Credentials > Project ID (de la region a escanear)
-- **Agency Name**: el nombre que le diste (ej: `security-scanner-agency`)
-
-### Paso 3: Obtener datos de la cuenta management
-
-De tu cuenta de auditoria (desde donde corres el scanner):
-- **Access Key y Secret Key** (con permisos para asumir agencies)
-- **Domain ID**: My Credentials > Account ID
-
-### Paso 4: Configurar config.yaml
-
-```yaml
-mode: "multi"
-
-# Region por defecto
-region: "la-south-2"
-
-# Cuenta management (desde donde se ejecuta el scanner)
-multi_account:
-  management_account:
-    access_key: "MANAGEMENT_AK"
-    secret_key: "MANAGEMENT_SK"
-    domain_id: "management-domain-id-xxxx"
-
-  # Cuentas a escanear
-  target_accounts:
-    - account_name: "Produccion"
-      domain_id: "target-domain-id-prod"
-      agency_name: "security-scanner-agency"
-      project_id: "target-project-id-prod"
-      region: "la-south-2"
-
-    - account_name: "Desarrollo"
-      domain_id: "target-domain-id-dev"
-      agency_name: "security-scanner-agency"
-      project_id: "target-project-id-dev"
-      region: "la-south-2"
-
-    - account_name: "Staging"
-      domain_id: "target-domain-id-stg"
-      agency_name: "security-scanner-agency"
-      project_id: "target-project-id-stg"
-      region: "ap-southeast-1"
-
-# Scanners
 scanners:
   iam: true
   vpc: true
@@ -333,121 +190,90 @@ scanners:
   cts: true
   elb: true
 
-# Output
 output:
   directory: "./output"
   formats:
     - html
     - json
-    - csv
 ```
+
+> Solo necesitas completar las regiones donde tenes recursos. Las demas dejalaas con project_id vacio y seran ignoradas.
 
 ---
 
 ## 5. Ejecucion del Scanner
 
-### Comando basico
+### Flujo completo
 
 ```bash
-python main.py scan
+# 1. Activar entorno virtual
+venv\Scripts\activate
+
+# 2. Configurar credenciales (hacer esto cada vez que abras una terminal nueva)
+set HWCLOUD_AK=tu_access_key
+set HWCLOUD_SK=tu_secret_key
+set HWCLOUD_DOMAIN_ID=tu_domain_id
+
+# 3. Ejecutar el scan
+python main.py scan --no-verify-ssl
 ```
 
-### Opciones disponibles
+### Opciones de ejecucion
 
 ```bash
-# Especificar archivo de configuracion
-python main.py scan --config config/config.yaml
+# Scan basico (region principal del config)
+python main.py scan --no-verify-ssl
 
-# Elegir directorio de output
-python main.py scan --output ./mis-reportes
+# Scan de una region especifica
+python main.py scan --no-verify-ssl --regions la-south-2
 
-# Elegir formatos de reporte
-python main.py scan --format html,json,csv
+# Scan de multiples regiones
+python main.py scan --no-verify-ssl --regions la-south-2,la-north-2,ap-southeast-1
 
-# Ejecutar solo scanners especificos
-python main.py scan --scanners iam,vpc
+# Scan de TODAS las regiones configuradas (con project_id)
+python main.py scan --no-verify-ssl --regions all
 
-# === OPCIONES DE REGION ===
+# Solo scanners especificos
+python main.py scan --no-verify-ssl --scanners iam,vpc
 
-# Escanear una region especifica (override config)
-python main.py scan --regions la-south-2
+# Elegir formatos de salida
+python main.py scan --no-verify-ssl --format html,json,csv
 
-# Escanear multiples regiones
-python main.py scan --regions la-south-2,ap-southeast-1,cn-north-4
+# Combinar opciones
+python main.py scan --no-verify-ssl --regions all --scanners iam,vpc --format html,csv
 
-# Escanear TODAS las regiones disponibles
-python main.py scan --regions all
-
-# Modo verbose (mas detalle en logs)
-python main.py scan --verbose
-
-# === OPCIONES DE RED/SSL ===
-
-# Si estas detras de un proxy corporativo (error de certificado SSL)
-python main.py scan --interactive --no-verify-ssl
-
-# Combinar todo: interactivo + sin SSL + todas las regiones
-python main.py scan --interactive --no-verify-ssl --regions all
+# Modo verbose (mas detalle)
+python main.py scan --no-verify-ssl --verbose
 ```
 
 ### Otros comandos
 
 ```bash
-# Validar configuracion sin ejecutar el scan
-python main.py validate
+# Listar regiones disponibles
+python main.py list-regions
 
 # Listar scanners disponibles
 python main.py list-scanners
 
-# Listar todas las regiones disponibles
-python main.py list-regions
+# Validar configuracion
+python main.py validate
 
 # Ver version
 python main.py --version
 ```
 
-### Ejemplo de salida
+### Nota sobre --no-verify-ssl
 
-```
-╭─────────────────────────────────────────╮
-│   Huawei Cloud Security Scanner         │
-│   Security Assessment Tool v1.0.0       │
-╰─────────────────────────────────────────╯
-
-✓ Configuration loaded successfully
-✓ Authenticated (single mode) - 1 account(s) to scan
-✓ Scanners: IAM, VPC, ECS, OBS, CTS, ELB
-
-Scanning account: single-account (region: la-south-2)
-  IAM: 15 checks, 4 failed
-  VPC: 8 checks, 2 failed
-  ECS: 5 checks, 1 failed
-  OBS: 6 checks, 2 failed
-  CTS: 3 checks, 0 failed
-  ELB: 4 checks, 1 failed
-
-┌─────────── Scan Results Summary ───────────┐
-│ Account    │ Region    │ Total │ Pass │ Fail │
-│ single-acc │ la-south-2│   41  │  31  │  10  │
-└────────────────────────────────────────────┘
-
-✓ HTML Dashboard: ./output/index.html
-✓ JSON Report: ./output/scan_report_20260630_160000.json
-
-Scan complete!
-Open ./output/index.html in your browser to view the dashboard.
-```
+Este flag es necesario si tu red corporativa usa un proxy que intercepta SSL (certificado self-signed). Si estas en una red sin proxy, podes omitirlo.
 
 ---
 
 ## 6. Visualizacion de Reportes
 
-### Dashboard HTML
-
-Despues de ejecutar el scan, abrir el archivo HTML generado:
+Despues de ejecutar el scan, abrir el dashboard HTML:
 
 ```bash
-# Windows - abrir directamente en el browser
+# Windows
 start output\index.html
 
 # Linux
@@ -459,210 +285,157 @@ open output/index.html
 
 El dashboard incluye:
 
-- **Pagina Home**: resumen de severidades con barras de progreso, cards por servicio con contadores, graficos de torta y barras
-- **Pagina Findings**: tabla completa de todos los hallazgos con filtros por severidad, status y servicio
-- **Paginas por Servicio**: hallazgos detallados filtrados por cada servicio (IAM, VPC, etc.)
-- **Selector de cuentas**: dropdown para filtrar por cuenta (en modo multi-account)
-
-### Navegacion del Dashboard
-
-- **Sidebar izquierda**: navegacion entre Home, Findings y cada servicio escaneado
-- **Filtros**: dropdowns para severidad (Critical/High/Medium/Low), status (Pass/Fail) y servicio
-- **Selector de cuenta**: arriba a la derecha, para filtrar hallazgos por cuenta especifica
+- **Pagina Home**: resumen de severidades, cards por servicio, graficos
+- **Pagina Findings**: tabla completa filtrable por severidad, status y servicio
+- **Paginas por Servicio**: hallazgos detallados de cada servicio
+- **Selector de cuentas**: dropdown para filtrar por cuenta (multi-account)
 
 ---
 
 ## 7. Exportacion de Informes
 
-### Formatos disponibles
+| Formato | Archivo | Uso |
+|---------|---------|-----|
+| HTML | `output/index.html` | Dashboard visual |
+| JSON | `output/scan_report_FECHA.json` | Integracion con SIEM |
+| CSV | `output/scan_findings_FECHA.csv` | Analisis en Excel |
 
-| Formato | Archivo generado | Uso |
-|---------|-----------------|-----|
-| HTML | `output/index.html` | Dashboard visual para presentaciones |
-| JSON | `output/scan_report_FECHA.json` | Integracion con otras herramientas, SIEM |
-| JSON Summary | `output/scan_summary_FECHA.json` | Resumen rapido sin detalle |
-| CSV | `output/scan_findings_FECHA.csv` | Abrir en Excel para analisis/filtrado |
-
-### Generar todos los formatos
+Para generar todos los formatos:
 
 ```bash
-python main.py scan --format html,json,csv
+python main.py scan --no-verify-ssl --format html,json,csv
 ```
-
-### Uso del CSV en Excel
-
-El archivo CSV se genera con encoding UTF-8 BOM, compatible con Excel sin necesidad de importacion especial. Columnas incluidas:
-
-- account_name, account_id, region
-- service, category, check_id, check_title
-- severity, status
-- description, resource_id, resource_name
-- remediation, reference_url
-- timestamp
-
-### Uso del JSON para automatizacion
-
-El JSON completo tiene la estructura:
-
-```json
-{
-  "scanner": "Huawei Cloud Security Scanner",
-  "version": "1.0.0",
-  "generated_at": "2026-06-30T16:00:00",
-  "results": [
-    {
-      "summary": { ... },
-      "findings": [ ... ]
-    }
-  ]
-}
-```
-
-Puede ser consumido por scripts de automatizacion, enviado a un SIEM o usado para generar tickets automaticos.
 
 ---
 
-## 8. Sobre Recursos Creados
+## 8. Agregar Nuevas Regiones
+
+Si Huawei Cloud habilita una nueva region para tu cuenta:
+
+**Paso 1:** Ir a Huawei Console > My Credentials > API Credentials
+
+**Paso 2:** Copiar el Project ID de la nueva region
+
+**Paso 3:** Editar `config/config.yaml` y agregar una entrada en la seccion `regions`:
+
+```yaml
+regions:
+  # ... regiones existentes ...
+  - region: "nuevo-codigo-region"
+    project_id: "el-project-id-de-esa-region"
+```
+
+**Paso 4:** Ejecutar el scan incluyendo la nueva region:
+
+```bash
+python main.py scan --no-verify-ssl --regions nuevo-codigo-region
+```
+
+O escanear todas:
+
+```bash
+python main.py scan --no-verify-ssl --regions all
+```
+
+### Como saber los codigos de region
+
+```bash
+python main.py list-regions
+```
+
+O consultar: https://developer.huaweicloud.com/intl/en-us/endpoint
+
+---
+
+## 9. Modo Multi Account
+
+Para escanear multiples cuentas de Huawei Cloud desde una cuenta central.
+
+### Concepto: IAM Agencies
+
+Se crea una **Agency** en cada cuenta target que delega permisos de lectura a la cuenta de auditoria.
+
+### Configuracion
+
+En `config.yaml` cambiar `mode: "multi"` y agregar la seccion `multi_account`. Ver `config.yaml.example` para el formato completo.
+
+Las credenciales de la cuenta management tambien van por variables de entorno (`HWCLOUD_AK` / `HWCLOUD_SK`).
+
+---
+
+## 10. Sobre Recursos Creados
 
 ### Esta herramienta NO crea ningun recurso
 
-El scanner es **100% de solo lectura (read-only)**. Todas las llamadas a las APIs de Huawei Cloud son operaciones de tipo:
+El scanner es **100% de solo lectura**. No ejecuta ninguna operacion de Create, Update o Delete.
 
-- `List*` (listar recursos)
-- `Show*` (obtener detalle de un recurso)
-- `Get*` (obtener configuracion)
+- **En tu cuenta de Huawei Cloud**: no queda nada
+- **En tu maquina local**: se generan reportes en `output/`
+- **Logs de auditoria (CTS)**: las llamadas API quedan registradas como operaciones de lectura
 
-**No ejecuta ninguna operacion de:**
-- Create (crear)
-- Update (modificar)
-- Delete (eliminar)
-- Put (sobreescribir)
+### Para eliminar despues del assessment
 
-### Que pasa despues de ejecutar el scanner?
-
-- **En tu cuenta de Huawei Cloud**: no queda nada. No se crean usuarios, roles, instancias ni ningun otro recurso.
-- **En tu maquina local**: se generan los archivos de reporte en la carpeta `output/`. Si queres limpiar, simplemente borra esa carpeta.
-- **Logs de auditoria (CTS)**: las llamadas API del scanner quedaran registradas en Cloud Trace Service como operaciones de lectura. Esto es normal y esperado.
-
-### Unico recurso requerido (Multi Account): IAM Agency
-
-En el modo **Multi Account**, necesitas crear manualmente una **Agency** en cada cuenta target ANTES de ejecutar el scanner. Esta Agency es un recurso de IAM que otorga permisos delegados.
-
-**Para eliminar la Agency despues del assessment:**
-
-1. Ingresa a la consola de la cuenta target
-2. Ve a **IAM > Agencies**
-3. Busca la agency `security-scanner-agency`
-4. Click en **Delete**
-5. Confirmar la eliminacion
-
-Esto revoca inmediatamente los permisos delegados. No es necesario eliminar nada mas.
+- **Borrar reportes locales**: eliminar la carpeta `output/`
+- **En modo Multi Account**: eliminar las Agencies creadas en IAM > Agencies
 
 ---
 
-## 9. Troubleshooting
+## 11. Troubleshooting
 
-### Error: "SSL: CERTIFICATE_VERIFY_FAILED" / "self-signed certificate"
+### Error: "Credenciales no configuradas"
 
 ```
-Causa: Tu red corporativa tiene un proxy/firewall que intercepta HTTPS
-con un certificado propio que Python no reconoce.
+Causa: No se configuraron las variables de entorno HWCLOUD_AK / HWCLOUD_SK.
 
-Solucion: Agregar el flag --no-verify-ssl
-  python main.py scan --interactive --no-verify-ssl
+Solucion:
+  set HWCLOUD_AK=tu_access_key
+  set HWCLOUD_SK=tu_secret_key
 ```
 
-### Error: "verify ak sk signature failed" / "Could not auto-discover projects"
+### Error: "SSL: CERTIFICATE_VERIFY_FAILED"
+
+```
+Causa: Red corporativa con proxy SSL.
+
+Solucion: Agregar --no-verify-ssl al comando
+  python main.py scan --no-verify-ssl
+```
+
+### Error: "failed to reach the limit, forbidden"
+
+```
+Causa: Rate limiting por demasiadas llamadas API en poco tiempo.
+
+Solucion: Esperar 15-30 minutos y volver a ejecutar.
+El scanner tiene delays entre llamadas para evitar esto.
+```
+
+### Error: "not authorized to perform"
 
 ```
 Causa: El usuario IAM no tiene permisos suficientes.
 
-Solucion: Asignar el rol "Tenant Guest" al grupo del usuario:
-  1. IAM > User Groups > tu grupo > Permissions > Authorize
-  2. Buscar "Tenant Guest"
-  3. Scope: All resources
-  4. OK
+Solucion: Asignar Tenant Guest + IAM ReadOnlyAccess al grupo del usuario.
 ```
 
-### Error: "Configuration file not found"
+### Error: "get token error, status:400"
 
 ```
-Solucion: Usar modo interactivo (no necesita config file)
-  python main.py scan --interactive --no-verify-ssl
+Causa: El project_id no corresponde a la region configurada.
 
-O copiar config.yaml.example a config.yaml:
-  copy config\config.yaml.example config\config.yaml
+Solucion: Verificar en My Credentials que el project_id coincide
+con la region que estas escaneando.
 ```
 
-### Error: "Missing credentials"
+### Las credenciales se pierden al cerrar la terminal
 
 ```
-Solucion: Verificar que access_key y secret_key esten configurados
-en config.yaml o como variables de entorno (HWCLOUD_AK, HWCLOUD_SK)
+Esto es intencional (seguridad). Cada vez que abras una terminal nueva,
+volver a configurar:
+  set HWCLOUD_AK=tu_access_key
+  set HWCLOUD_SK=tu_secret_key
+  set HWCLOUD_DOMAIN_ID=tu_domain_id
 ```
-
-### Error: "Failed to validate credentials"
-
-```
-Posibles causas:
-- AK/SK incorrectos
-- El usuario fue deshabilitado
-- La region configurada no es valida
-- Sin conectividad a internet
-
-Solucion: Verificar credenciales en la consola de Huawei Cloud
-```
-
-### Error: "Failed to assume agency"
-
-```
-Posibles causas (Multi Account):
-- La Agency no existe en la cuenta target
-- El domain_id de la cuenta management no coincide con el trustee
-- La Agency no tiene los permisos necesarios
-- El agency_name en config.yaml no coincide con el nombre real
-
-Solucion: Verificar la configuracion de la Agency en IAM > Agencies
-de la cuenta target
-```
-
-### Error: "OBS SDK not available"
-
-```
-Solucion: Instalar el SDK de OBS
-  pip install esdk-obs-python
-```
-
-### El dashboard no muestra graficos
-
-```
-Solucion: El dashboard usa Chart.js desde CDN. Necesitas conexion
-a internet al abrir el HTML, o el browser debe permitir cargar
-scripts externos.
-```
-
-### Regiones disponibles
-
-Ejecutar `python main.py list-regions` para ver la lista completa. Algunas de las mas comunes:
-
-| Region | Codigo |
-|--------|--------|
-| Latin America - Santiago | la-south-2 |
-| Latin America - Mexico City | la-north-2 |
-| South America - Sao Paulo | sa-brazil-1 |
-| Asia Pacific - Singapore | ap-southeast-3 |
-| Asia Pacific - Hong Kong | ap-southeast-1 |
-| Asia Pacific - Jakarta | ap-southeast-4 |
-| Europe - Paris | eu-west-0 |
-| Europe - Dublin | eu-west-101 |
-| Africa - Johannesburg | af-south-1 |
-| China North - Beijing | cn-north-4 |
-| China East - Shanghai | cn-east-3 |
-| Middle East - Istanbul | tr-west-1 |
-
-> **Nota sobre multi-region:** Cada region tiene su propio Project ID. Cuando ejecutas `--regions all`, el scanner intenta conectar a cada region. Si no tenes Project ID para una region, puede fallar en esa region y continuar con las demas.
-
-Consultar la lista completa en: https://developer.huaweicloud.com/endpoint
 
 ---
 
