@@ -58,7 +58,8 @@ class BaseScanner(ABC):
     def _build_client(self, client_class, region_class, credentials):
         """
         Build a service client.
-        Replicates exact pattern from test_connection.py that works.
+        Tries .with_region() first. If region not supported by SDK,
+        falls back to .with_endpoint() for custom/local regions (e.g. sa-argentina-1).
         """
         from huaweicloudsdkcore.http.http_config import HttpConfig as HC
 
@@ -71,11 +72,29 @@ class BaseScanner(ABC):
         config = HC.get_default_config()
         config.ignore_ssl_verification = True
 
+        # Try with_region() first (works for standard regions)
+        try:
+            client = (
+                client_class.new_builder()
+                .with_credentials(direct_creds)
+                .with_http_config(config)
+                .with_region(region_class.value_of(self.region))
+                .build()
+            )
+            return client
+        except (KeyError, ValueError) as e:
+            # Region not registered in SDK - use explicit endpoint
+            self.logger.info(
+                f"Region '{self.region}' not in SDK registry, using explicit endpoint"
+            )
+
+        # Fallback: build endpoint URL manually for custom regions
+        endpoint = f"https://{self.service_name}.{self.region}.myhuaweicloud.com"
         client = (
             client_class.new_builder()
             .with_credentials(direct_creds)
             .with_http_config(config)
-            .with_region(region_class.value_of(self.region))
+            .with_endpoint(endpoint)
             .build()
         )
         return client

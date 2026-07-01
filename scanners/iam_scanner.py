@@ -51,13 +51,24 @@ class IAMScanner(BaseScanner):
         config = HC.get_default_config()
         config.ignore_ssl_verification = True
 
-        self.client = (
-            IamClient.new_builder()
-            .with_credentials(creds)
-            .with_http_config(config)
-            .with_region(IamRegion.value_of(self.region))
-            .build()
-        )
+        # Try with_region() first, fallback to endpoint for custom regions
+        try:
+            self.client = (
+                IamClient.new_builder()
+                .with_credentials(creds)
+                .with_http_config(config)
+                .with_region(IamRegion.value_of(self.region))
+                .build()
+            )
+        except (KeyError, ValueError):
+            endpoint = f"https://iam.{self.region}.myhuaweicloud.com"
+            self.client = (
+                IamClient.new_builder()
+                .with_credentials(creds)
+                .with_http_config(config)
+                .with_endpoint(endpoint)
+                .build()
+            )
 
     def _get_checks(self) -> list:
         """Return list of IAM checks to run."""
