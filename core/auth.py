@@ -273,8 +273,11 @@ class HuaweiCloudAuth:
         }
 
     def _validate_credentials(self, creds: AccountCredentials) -> bool:
-        """Validate credentials by listing projects (lightweight API call)."""
+        """Validate credentials by making a lightweight regional API call."""
         try:
+            from huaweicloudsdkvpc.v2 import VpcClient, ListVpcsRequest
+            from huaweicloudsdkvpc.v2.region.vpc_region import VpcRegion
+
             credentials = BasicCredentials(
                 creds.access_key,
                 creds.secret_key,
@@ -285,23 +288,24 @@ class HuaweiCloudAuth:
                 credentials.with_security_token(creds.security_token)
 
             http_config = HttpConfig.get_default_config()
-            if self.http_config:
-                http_config = self.http_config
+            if not self.verify_ssl:
+                http_config.ignore_ssl_verification = True
 
-            # Use the region-specific IAM endpoint
-            endpoint = f"https://iam.{creds.region}.myhuaweicloud.com"
+            # Use VPC API (regional) instead of IAM (global) for validation
+            endpoint = f"https://vpc.{creds.region}.myhuaweicloud.com"
 
-            iam_client = (
-                IamClient.new_builder()
+            vpc_client = (
+                VpcClient.new_builder()
                 .with_credentials(credentials)
                 .with_http_config(http_config)
                 .with_endpoint(endpoint)
                 .build()
             )
 
-            request = KeystoneListProjectsRequest()
-            response = iam_client.keystone_list_projects(request)
-            return response.projects is not None
+            request = ListVpcsRequest()
+            request.limit = 1
+            response = vpc_client.list_vpcs(request)
+            return True
 
         except Exception as e:
             logger.warning(f"Credential validation failed: {e}")
