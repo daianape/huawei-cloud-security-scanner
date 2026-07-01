@@ -96,7 +96,7 @@ scanners:
   obs: true
   cts: true
   elb: true
-  # Nuevos
+  # Nuevos (alta prioridad)
   identity-center: true
   rds: true
   dcs: true
@@ -107,6 +107,16 @@ scanners:
   evs: true
   kms: true
   cce: true
+  # Nuevos (media prioridad)
+  cbr: true
+  vpn: true
+  dns: true
+  sfs: true
+  functiongraph: true
+  ces: true
+  lts: true
+  config: true
+  smn: true
 
 # === OUTPUT ===
 output:

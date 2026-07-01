@@ -17,6 +17,15 @@ from scanners.cfw_scanner import CFWScanner
 from scanners.evs_scanner import EVSScanner
 from scanners.kms_scanner import KMSScanner
 from scanners.cce_scanner import CCEScanner
+from scanners.cbr_scanner import CBRScanner
+from scanners.vpn_scanner import VPNScanner
+from scanners.dns_scanner import DNSScanner
+from scanners.sfs_scanner import SFSScanner
+from scanners.functiongraph_scanner import FunctionGraphScanner
+from scanners.ces_scanner import CESScanner
+from scanners.lts_scanner import LTSScanner
+from scanners.config_scanner import ConfigScanner
+from scanners.smn_scanner import SMNScanner
 
 AVAILABLE_SCANNERS = {
     "vpc": VPCScanner,
@@ -35,6 +44,15 @@ AVAILABLE_SCANNERS = {
     "evs": EVSScanner,
     "kms": KMSScanner,
     "cce": CCEScanner,
+    "cbr": CBRScanner,
+    "vpn": VPNScanner,
+    "dns": DNSScanner,
+    "sfs": SFSScanner,
+    "functiongraph": FunctionGraphScanner,
+    "ces": CESScanner,
+    "lts": LTSScanner,
+    "config": ConfigScanner,
+    "smn": SMNScanner,
 }
 
 __all__ = [

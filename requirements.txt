@@ -10,7 +10,7 @@ huaweicloudsdkcts>=3.1.80
 huaweicloudsdkorganizations>=3.1.80
 huaweicloudsdkrms>=3.1.80
 
-# Huawei Cloud SDK - New scanners
+# Huawei Cloud SDK - New scanners (high priority)
 huaweicloudsdkidentitycenter>=3.1.80
 huaweicloudsdkrds>=3.1.80
 huaweicloudsdkdcs>=3.1.80
@@ -21,6 +21,16 @@ huaweicloudsdkcfw>=3.1.80
 huaweicloudsdkevs>=3.1.80
 huaweicloudsdkkms>=3.1.80
 huaweicloudsdkcce>=3.1.80
+
+# Huawei Cloud SDK - Medium priority scanners
+huaweicloudsdkcbr>=3.1.80
+huaweicloudsdkvpn>=3.1.80
+huaweicloudsdkdns>=3.1.80
+huaweicloudsdksfsturbo>=3.1.80
+huaweicloudsdkfunctiongraph>=3.1.80
+huaweicloudsdkces>=3.1.80
+huaweicloudsdklts>=3.1.80
+huaweicloudsdksmn>=3.1.80
 
 # Utilities
 pyyaml>=6.0
