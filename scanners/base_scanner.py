@@ -58,10 +58,8 @@ class BaseScanner(ABC):
     def _build_client(self, client_class, region_class, credentials):
         """
         Build a service client with proper HTTP config.
-        Uses explicit endpoint for reliable connectivity.
+        Uses .with_region() which is proven to work (test_connection.py).
         """
-        endpoint = f"https://{self.service_name}.{self.region}.myhuaweicloud.com"
-
         # Build credentials directly from target (same as test_connection.py)
         direct_creds = BasicCredentials(
             self.target.credentials.access_key,
@@ -72,7 +70,7 @@ class BaseScanner(ABC):
         builder = (
             client_class.new_builder()
             .with_credentials(direct_creds)
-            .with_endpoint(endpoint)
+            .with_region(region_class.value_of(self.region))
         )
         if self.http_config:
             builder.with_http_config(self.http_config)
