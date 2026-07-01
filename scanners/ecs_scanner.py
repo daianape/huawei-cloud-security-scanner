@@ -33,7 +33,7 @@ class ECSScanner(BaseScanner):
         builder = (
             EcsClient.new_builder()
             .with_credentials(credentials)
-            .with_region(EcsRegion.value_of(self.region))
+            .with_endpoint(self._get_endpoint("ecs"))
         )
         if self.http_config:
             builder.with_http_config(self.http_config)

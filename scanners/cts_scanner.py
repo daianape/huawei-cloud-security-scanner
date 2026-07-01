@@ -33,7 +33,7 @@ class CTSScanner(BaseScanner):
         builder = (
             CtsClient.new_builder()
             .with_credentials(credentials)
-            .with_region(CtsRegion.value_of(self.region))
+            .with_endpoint(self._get_endpoint("cts"))
         )
         if self.http_config:
             builder.with_http_config(self.http_config)

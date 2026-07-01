@@ -39,6 +39,7 @@ class BaseScanner(ABC):
         self.project_id = target.project_id
         self.account_name = target.account_name
         self.verify_ssl = getattr(target, 'verify_ssl', True)
+        self.cloud_domain = getattr(target, 'cloud_domain', 'myhuaweicloud.com')
         self.logger = logging.getLogger(f"{__name__}.{self.service_name}")
 
         # HTTP config for SSL verification
@@ -48,6 +49,10 @@ class BaseScanner(ABC):
             self.http_config.ignore_ssl_verification = True
         else:
             self.http_config = None
+
+    def _get_endpoint(self, service: str) -> str:
+        """Build the endpoint URL for a service using the correct cloud domain."""
+        return f"https://{service}.{self.region}.{self.cloud_domain}"
 
     def run(self) -> list[Finding]:
         """

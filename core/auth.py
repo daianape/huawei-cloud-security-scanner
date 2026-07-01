@@ -47,6 +47,7 @@ class ScanTarget:
     project_id: str
     domain_id: Optional[str] = None
     verify_ssl: bool = True
+    cloud_domain: str = "myhuaweicloud.com"  # or "huaweicloud.com" for international
 
 
 class HuaweiCloudAuth:
@@ -138,6 +139,7 @@ class HuaweiCloudAuth:
             project_id=project_id,
             domain_id=domain_id,
             verify_ssl=self.verify_ssl,
+            cloud_domain=self.config.get("cloud_domain", "myhuaweicloud.com"),
         )
 
         self.targets = [target]

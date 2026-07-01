@@ -34,7 +34,7 @@ class ELBScanner(BaseScanner):
         builder = (
             ElbClient.new_builder()
             .with_credentials(credentials)
-            .with_region(ElbRegion.value_of(self.region))
+            .with_endpoint(self._get_endpoint("elb"))
         )
         if self.http_config:
             builder.with_http_config(self.http_config)

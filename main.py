@@ -303,6 +303,11 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
         "  Domain ID (Account ID from My Credentials)",
         type=str,
     )
+    cloud_domain = click.prompt(
+        "  Cloud domain",
+        type=click.Choice(["huaweicloud.com", "myhuaweicloud.com"]),
+        default="huaweicloud.com",
+    )
 
     # Auto-discover projects (no need to ask for project_id or region)
     console.print()
@@ -335,6 +340,7 @@ def _prompt_credentials(no_verify_ssl: bool = False) -> dict:
         "mode": "single",
         "region": region,
         "project_id": project_id,
+        "cloud_domain": cloud_domain,
         "credentials": {
             "access_key": access_key,
             "secret_key": secret_key,
@@ -423,6 +429,7 @@ def _create_region_target(target: ScanTarget, region: str, cfg: dict) -> ScanTar
         project_id=project_id,
         domain_id=target.domain_id,
         verify_ssl=getattr(target, 'verify_ssl', cfg.get("verify_ssl", True)),
+        cloud_domain=getattr(target, 'cloud_domain', cfg.get("cloud_domain", "myhuaweicloud.com")),
     )
     return new_target
 
