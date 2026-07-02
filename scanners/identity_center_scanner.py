@@ -19,11 +19,10 @@ try:
         IdentityCenterClient,
         ListInstancesRequest,
         ListPermissionSetsRequest,
-        ListAccountAssignmentsRequest,
     )
     from huaweicloudsdkidentitycenter.v1.region.identity_center_region import IdentityCenterRegion
     IDENTITY_CENTER_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception):
     IDENTITY_CENTER_AVAILABLE = False
 
 
