@@ -82,24 +82,34 @@ class ConfigScanner(BaseScanner):
         return [self._check_compliance_rules]
 
     def _check_compliance_rules(self) -> None:
-        """CFG-02: Check if compliance rules are configured."""
+        """CFG-02: Check if compliance rules are configured and their status."""
         try:
             request = ListPolicyAssignmentsRequest()
             response = self.client.list_policy_assignments(request)
 
-            # Try different response attributes (varies by SDK version)
-            rules = (
-                getattr(response, 'policy_assignments', None)
-                or getattr(response, 'value', None)
-                or getattr(response, 'body', None)
-                or []
-            )
+            # Get the list of policy assignments from response
+            rules = None
+            # Try different attribute names depending on SDK version
+            for attr in ['policy_assignments', 'value', 'body']:
+                val = getattr(response, attr, None)
+                if val is not None:
+                    rules = val
+                    break
 
-            if not rules:
+            # If response itself is iterable
+            if rules is None:
+                rules = []
+
+            if isinstance(rules, list):
+                total = len(rules)
+            else:
+                total = 0
+
+            if total == 0:
                 self._add_finding(
                     check_id="CFG-02",
                     check_title="Sin Reglas de Compliance",
-                    severity=Severity.MEDIUM, status=Status.FAIL,
+                    severity=Severity.HIGH, status=Status.FAIL,
                     description=(
                         "No hay reglas de compliance configuradas en Config service. "
                         "No se esta monitoreando el cumplimiento de configuraciones."
@@ -107,27 +117,32 @@ class ConfigScanner(BaseScanner):
                     remediation="Configurar reglas de compliance en Config > Compliance.",
                 )
             else:
-                if isinstance(rules, list):
-                    total = len(rules)
-                    non_compliant = sum(
-                        1 for r in rules
-                        if hasattr(r, 'compliance_state') and r.compliance_state == "NonCompliant"
+                # Count non-compliant rules
+                non_compliant = 0
+                for r in rules:
+                    state = getattr(r, 'compliance_state', None) or getattr(r, 'state', None)
+                    if state and str(state).lower() in ("noncompliant", "non_compliant"):
+                        non_compliant += 1
+
+                if non_compliant > 0:
+                    self._add_finding(
+                        check_id="CFG-02",
+                        check_title="Reglas de Compliance No Conformes",
+                        severity=Severity.HIGH, status=Status.FAIL,
+                        description=(
+                            f"{total} reglas configuradas, {non_compliant} no cumplen compliance. "
+                            f"Tasa de conformidad: {round((total - non_compliant) / total * 100, 1)}%."
+                        ),
+                        remediation="Revisar reglas no conformes en Config > Conformidad de recursos.",
                     )
                 else:
-                    total = 1
-                    non_compliant = 0
+                    self._add_finding(
+                        check_id="CFG-02",
+                        check_title="Reglas de Compliance Conformes",
+                        severity=Severity.MEDIUM, status=Status.PASS,
+                        description=f"{total} reglas configuradas, todas conformes.",
+                    )
 
-                self._add_finding(
-                    check_id="CFG-02",
-                    check_title="Reglas de Compliance Configuradas",
-                    severity=Severity.MEDIUM,
-                    status=Status.FAIL if non_compliant > 0 else Status.PASS,
-                    description=(
-                        f"{total} reglas configuradas. "
-                        f"{non_compliant} no cumplen compliance."
-                    ),
-                    remediation="Revisar reglas no compliant y remediar.",
-                )
         except Exception as e:
             error_msg = str(e).lower()
             if "not authorized" in error_msg or "403" in str(e):

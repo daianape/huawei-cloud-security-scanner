@@ -121,10 +121,15 @@ class IdentityCenterScanner(BaseScanner):
             if not instances:
                 self._add_finding(
                     check_id="IDC-01",
-                    check_title="Identity Center No Configurado",
-                    severity=Severity.INFORMATIONAL,
-                    status=Status.NOT_AVAILABLE,
-                    description="No se encontraron instancias de Identity Center configuradas.",
+                    check_title="Identity Center No Habilitado",
+                    severity=Severity.HIGH,
+                    status=Status.FAIL,
+                    description=(
+                        "IAM Identity Center no esta habilitado en esta cuenta. "
+                        "Sin Identity Center no hay gestion centralizada de acceso, "
+                        "SSO ni control de permission sets."
+                    ),
+                    remediation="Habilitar IAM Identity Center para gestion centralizada de acceso.",
                 )
                 return
 
@@ -132,32 +137,40 @@ class IdentityCenterScanner(BaseScanner):
                 instance_id = instance.instance_id
 
                 # List permission sets
-                ps_request = ListPermissionSetsRequest()
-                ps_request.instance_id = instance_id
-                ps_response = self.client.list_permission_sets(ps_request)
-                permission_sets = ps_response.permission_sets or []
+                if ListPermissionSetsRequest:
+                    ps_request = ListPermissionSetsRequest()
+                    ps_request.instance_id = instance_id
+                    ps_response = self.client.list_permission_sets(ps_request)
+                    permission_sets = ps_response.permission_sets or []
 
-                for ps_id in permission_sets:
-                    # Check session duration
-                    if hasattr(ps_id, 'session_duration') and ps_id.session_duration:
-                        duration_hours = int(ps_id.session_duration.replace("PT", "").replace("H", ""))
-                        if duration_hours > 4:
-                            self._add_finding(
-                                check_id="IDC-03",
-                                check_title="Sesion Excesivamente Larga",
-                                severity=Severity.MEDIUM,
-                                status=Status.FAIL,
-                                description=(
-                                    f"Permission set tiene duracion de sesion de "
-                                    f"{duration_hours} horas. Recomendado: maximo 4 horas."
-                                ),
-                                resource_id=str(ps_id),
-                                remediation="Reducir la duracion de sesion a 4 horas o menos.",
-                            )
+                    self._add_finding(
+                        check_id="IDC-02",
+                        check_title="Identity Center Habilitado",
+                        severity=Severity.HIGH,
+                        status=Status.PASS,
+                        description=f"Identity Center activo con {len(permission_sets)} permission sets.",
+                        resource_id=instance_id,
+                    )
 
         except Exception as e:
             error_msg = str(e)
-            if "not authorized" in error_msg.lower() or "403" in error_msg:
+            if "Organizations not enabled" in error_msg or "IC.1223" in error_msg:
+                self._add_finding(
+                    check_id="IDC-01",
+                    check_title="Identity Center No Habilitado",
+                    severity=Severity.HIGH,
+                    status=Status.FAIL,
+                    description=(
+                        "IAM Identity Center no esta habilitado en esta cuenta "
+                        "(requiere Organizations habilitado). "
+                        "Sin Identity Center no hay gestion centralizada de acceso ni SSO."
+                    ),
+                    remediation=(
+                        "Habilitar Organizations primero, luego activar "
+                        "IAM Identity Center para gestion centralizada."
+                    ),
+                )
+            elif "not authorized" in error_msg.lower() or "403" in error_msg:
                 self._add_finding(
                     check_id="IDC-01",
                     check_title="Sin Permisos para Identity Center",
@@ -169,9 +182,23 @@ class IdentityCenterScanner(BaseScanner):
                 self._add_finding(
                     check_id="IDC-01",
                     check_title="Identity Center No Habilitado",
-                    severity=Severity.INFORMATIONAL,
-                    status=Status.NOT_AVAILABLE,
-                    description="IAM Identity Center no esta habilitado en esta cuenta.",
+                    severity=Severity.HIGH,
+                    status=Status.FAIL,
+                    description=(
+                        "IAM Identity Center no esta habilitado en esta cuenta. "
+                        "Sin Identity Center no hay gestion centralizada de acceso ni SSO."
+                    ),
+                    remediation="Habilitar IAM Identity Center para gestion centralizada de acceso.",
                 )
             else:
-                raise
+                self._add_finding(
+                    check_id="IDC-01",
+                    check_title="Identity Center No Habilitado",
+                    severity=Severity.HIGH,
+                    status=Status.FAIL,
+                    description=(
+                        "IAM Identity Center no esta habilitado en esta cuenta. "
+                        "Sin Identity Center no hay gestion centralizada de acceso ni SSO."
+                    ),
+                    remediation="Habilitar IAM Identity Center para gestion centralizada de acceso.",
+                )
