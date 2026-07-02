@@ -79,8 +79,6 @@ class ConfigScanner(BaseScanner):
                 remediation="Habilitar Config Service y configurar reglas de compliance.",
             )
             return []
-            )
-            return []
         return [self._check_compliance_rules]
 
     def _check_compliance_rules(self) -> None:
