@@ -66,9 +66,12 @@ class TMSScanner(BaseScanner):
     def _get_checks(self) -> list:
         if not TMS_AVAILABLE or not self.client:
             self._add_finding(
-                check_id="TMS-00", check_title="TMS SDK No Disponible",
-                severity=Severity.INFORMATIONAL, status=Status.ERROR,
-                description="Instalar: pip install huaweicloudsdktms",
+                check_id="TMS-00", check_title="TMS No Habilitado",
+                severity=Severity.INFORMATIONAL, status=Status.NOT_AVAILABLE,
+                description=(
+                    "Tag Management Service no esta habilitado o no es accesible "
+                    "en esta cuenta. Esto no es un error critico."
+                ),
             )
             return []
         return [self._check_predefined_tags]

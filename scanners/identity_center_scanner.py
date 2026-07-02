@@ -15,12 +15,16 @@ from core.models import Severity, Status, ServiceCategory
 logger = logging.getLogger(__name__)
 
 try:
-    from huaweicloudsdkidentitycenter.v1 import (
-        IdentityCenterClient,
-        ListInstancesRequest,
-        ListPermissionSetsRequest,
-    )
-    from huaweicloudsdkidentitycenter.v1.region.identity_center_region import IdentityCenterRegion
+    from huaweicloudsdkidentitycenter.v1 import IdentityCenterClient
+    from huaweicloudsdkidentitycenter.v1 import ListInstancesRequest
+    try:
+        from huaweicloudsdkidentitycenter.v1 import ListPermissionSetsRequest
+    except ImportError:
+        ListPermissionSetsRequest = None
+    try:
+        from huaweicloudsdkidentitycenter.v1.region.identity_center_region import IdentityCenterRegion
+    except (ImportError, Exception):
+        IdentityCenterRegion = None
     IDENTITY_CENTER_AVAILABLE = True
 except (ImportError, Exception):
     IDENTITY_CENTER_AVAILABLE = False
@@ -75,12 +79,12 @@ class IdentityCenterScanner(BaseScanner):
         if not IDENTITY_CENTER_AVAILABLE:
             self._add_finding(
                 check_id="IDC-00",
-                check_title="Identity Center SDK No Disponible",
+                check_title="Identity Center No Habilitado",
                 severity=Severity.INFORMATIONAL,
-                status=Status.ERROR,
+                status=Status.NOT_AVAILABLE,
                 description=(
-                    "El SDK de Identity Center no esta instalado. "
-                    "Instalar: pip install huaweicloudsdkidentitycenter"
+                    "IAM Identity Center no esta habilitado o no es accesible "
+                    "en esta cuenta. Esto no es un error critico."
                 ),
             )
             return []

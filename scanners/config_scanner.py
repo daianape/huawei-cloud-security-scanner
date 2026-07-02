@@ -67,9 +67,12 @@ class ConfigScanner(BaseScanner):
     def _get_checks(self) -> list:
         if not RMS_AVAILABLE or not self.client:
             self._add_finding(
-                check_id="CFG-00", check_title="Config/RMS No Disponible",
-                severity=Severity.INFORMATIONAL, status=Status.ERROR,
-                description="Config service no disponible o SDK no instalado.",
+                check_id="CFG-00", check_title="Config No Habilitado",
+                severity=Severity.INFORMATIONAL, status=Status.NOT_AVAILABLE,
+                description=(
+                    "Config Service (RMS) no esta habilitado o no es accesible "
+                    "en esta cuenta. Esto no es un error critico."
+                ),
             )
             return []
         return [self._check_compliance_rules]
