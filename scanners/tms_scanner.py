@@ -78,8 +78,6 @@ class TMSScanner(BaseScanner):
                 remediation="Habilitar TMS y definir tags obligatorios (environment, owner, project).",
             )
             return []
-            )
-            return []
         return [self._check_predefined_tags]
 
     def _check_predefined_tags(self) -> None:
