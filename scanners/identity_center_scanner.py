@@ -62,7 +62,7 @@ class IdentityCenterScanner(BaseScanner):
                 .build()
             )
         except (KeyError, ValueError):
-            endpoint = f"https://identitycenter.{self.region}.myhuaweicloud.com"
+            endpoint = "https://identitycenter.myhuaweicloud.com"
             self.client = (
                 IdentityCenterClient.new_builder()
                 .with_credentials(creds)
