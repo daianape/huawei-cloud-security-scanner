@@ -78,14 +78,16 @@ class IdentityCenterScanner(BaseScanner):
         """Return list of Identity Center checks to run."""
         if not IDENTITY_CENTER_AVAILABLE:
             self._add_finding(
-                check_id="IDC-00",
+                check_id="IDC-01",
                 check_title="Identity Center No Habilitado",
-                severity=Severity.INFORMATIONAL,
-                status=Status.NOT_AVAILABLE,
+                severity=Severity.HIGH,
+                status=Status.FAIL,
                 description=(
-                    "IAM Identity Center no esta habilitado o no es accesible "
-                    "en esta cuenta. Esto no es un error critico."
+                    "IAM Identity Center no esta habilitado en esta cuenta. "
+                    "Sin Identity Center no hay gestion centralizada de acceso, "
+                    "SSO ni control de permission sets."
                 ),
+                remediation="Habilitar IAM Identity Center para gestion centralizada de acceso.",
             )
             return []
 

@@ -66,12 +66,18 @@ class TMSScanner(BaseScanner):
     def _get_checks(self) -> list:
         if not TMS_AVAILABLE or not self.client:
             self._add_finding(
-                check_id="TMS-00", check_title="TMS No Habilitado",
-                severity=Severity.INFORMATIONAL, status=Status.NOT_AVAILABLE,
+                check_id="TMS-01",
+                check_title="Tag Management Service No Habilitado",
+                severity=Severity.HIGH,
+                status=Status.FAIL,
                 description=(
-                    "Tag Management Service no esta habilitado o no es accesible "
-                    "en esta cuenta. Esto no es un error critico."
+                    "Tag Management Service (TMS) no esta habilitado en esta cuenta. "
+                    "Sin politica de tagging, los recursos no se pueden clasificar "
+                    "ni auditar por owner, proyecto o ambiente."
                 ),
+                remediation="Habilitar TMS y definir tags obligatorios (environment, owner, project).",
+            )
+            return []
             )
             return []
         return [self._check_predefined_tags]

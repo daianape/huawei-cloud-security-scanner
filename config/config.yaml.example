@@ -120,10 +120,10 @@ scanners:
   # Adicionales
   bms: true
   ims: true
-  # Servicios globales (requieren habilitacion previa en la cuenta)
-  identity-center: false
-  config: false
-  tms: false
+  # Servicios globales (si no estan habilitados se reporta como hallazgo de seguridad)
+  identity-center: true
+  config: true
+  tms: true
 
 # === OUTPUT ===
 output:
