@@ -54,14 +54,17 @@ class IdentityCenterScanner(BaseScanner):
         config.ignore_ssl_verification = True
 
         try:
-            self.client = (
-                IdentityCenterClient.new_builder()
-                .with_credentials(creds)
-                .with_http_config(config)
-                .with_region(IdentityCenterRegion.value_of(self.region))
-                .build()
-            )
-        except (KeyError, ValueError):
+            if IdentityCenterRegion:
+                self.client = (
+                    IdentityCenterClient.new_builder()
+                    .with_credentials(creds)
+                    .with_http_config(config)
+                    .with_region(IdentityCenterRegion.value_of(self.region))
+                    .build()
+                )
+            else:
+                raise KeyError("No region class")
+        except (KeyError, ValueError, Exception):
             endpoint = "https://identitycenter.myhuaweicloud.com"
             self.client = (
                 IdentityCenterClient.new_builder()
@@ -70,9 +73,6 @@ class IdentityCenterScanner(BaseScanner):
                 .with_endpoint(endpoint)
                 .build()
             )
-        except Exception as e:
-            self.logger.warning(f"Identity Center not available in region {self.region}: {e}")
-            self.client = None
 
     def _get_checks(self) -> list:
         """Return list of Identity Center checks to run."""

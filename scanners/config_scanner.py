@@ -86,7 +86,14 @@ class ConfigScanner(BaseScanner):
         try:
             request = ListPolicyAssignmentsRequest()
             response = self.client.list_policy_assignments(request)
-            rules = response.policy_assignments or []
+
+            # Try different response attributes (varies by SDK version)
+            rules = (
+                getattr(response, 'policy_assignments', None)
+                or getattr(response, 'value', None)
+                or getattr(response, 'body', None)
+                or []
+            )
 
             if not rules:
                 self._add_finding(
@@ -100,23 +107,30 @@ class ConfigScanner(BaseScanner):
                     remediation="Configurar reglas de compliance en Config > Compliance.",
                 )
             else:
-                non_compliant = sum(
-                    1 for r in rules
-                    if hasattr(r, 'compliance_state') and r.compliance_state == "NonCompliant"
-                )
+                if isinstance(rules, list):
+                    total = len(rules)
+                    non_compliant = sum(
+                        1 for r in rules
+                        if hasattr(r, 'compliance_state') and r.compliance_state == "NonCompliant"
+                    )
+                else:
+                    total = 1
+                    non_compliant = 0
+
                 self._add_finding(
                     check_id="CFG-02",
                     check_title="Reglas de Compliance Configuradas",
                     severity=Severity.MEDIUM,
                     status=Status.FAIL if non_compliant > 0 else Status.PASS,
                     description=(
-                        f"{len(rules)} reglas configuradas. "
+                        f"{total} reglas configuradas. "
                         f"{non_compliant} no cumplen compliance."
                     ),
                     remediation="Revisar reglas no compliant y remediar.",
                 )
         except Exception as e:
-            if "not authorized" in str(e).lower():
+            error_msg = str(e).lower()
+            if "not authorized" in error_msg or "403" in str(e):
                 self._add_finding(
                     check_id="CFG-02",
                     check_title="Sin Permisos para Config",
