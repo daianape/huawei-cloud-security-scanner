@@ -118,7 +118,16 @@ Grid de cards clickeables, una por cada servicio escaneado. Cada card muestra:
 - Badge "Security"
 - Numero de findings
 
-**Click en una card** para ir directamente a la vista detalle de ese servicio.
+**Click en una card** para ir a la pagina Findings con ese servicio ya filtrado.
+
+### 3.5 Regions Overview
+
+Grid de cards clickeables, una por cada region escaneada. Cada card muestra:
+- Nombre de la region (ej: LA-SOUTH-2, SA-ARGENTINA-1)
+- Total de findings en esa region
+- Indicador de severidad (rojo si hay Critical/High, amarillo si Medium, cyan si solo Low)
+
+**Click en una card** para ir a la pagina Findings con esa region ya filtrada.
 
 ---
 
@@ -130,15 +139,16 @@ Esta pagina muestra TODOS los hallazgos en una tabla unificada.
 
 ### 4.1 Filtros
 
-Arriba de la tabla hay 3 filtros combinables:
+Arriba de la tabla hay 4 filtros combinables:
 
 | Filtro | Opciones |
 |--------|----------|
 | **Service** | Dropdown con todos los servicios escaneados |
+| **Region** | Dropdown con todas las regiones detectadas |
 | **Severity** | Critical / High / Medium / Low |
 | **Status** | Fail / Pass |
 
-Los filtros se combinan (AND): si seleccionas Service=IAM + Severity=High, veras solo findings de IAM con severidad High.
+Los filtros se combinan (AND): si seleccionas Service=IAM + Region=la-south-2 + Severity=High, veras solo findings de IAM en la-south-2 con severidad High.
 
 ### 4.2 Busqueda
 
@@ -244,7 +254,31 @@ Cada resource card tiene:
 
 ---
 
-## 6. Secciones Colapsables
+## 6. Filtro Rapido (Click en Cards)
+
+Muchos elementos del dashboard son clickeables y navegan directamente a Findings con un filtro pre-aplicado:
+
+| Elemento clickeable | Que filtra |
+|---------------------|------------|
+| **Service card** (Home > Services Overview) | Findings de ese servicio |
+| **Region card** (Home > Regions Overview) | Findings de esa region |
+| **Barra de severidad** (Home > Summary) | Findings de esa severidad |
+| **Card "Failed Findings"** (stat card roja) | Findings con status = Fail |
+| **Card "Passed"** (stat card teal) | Findings con status = Pass |
+| **Card "Critical+High"** (stat card navy) | Findings con severidad Critical o High |
+
+### Como funciona
+
+1. Click en cualquiera de estos elementos
+2. El dashboard navega automaticamente a la pagina Findings
+3. El filtro correspondiente se aplica automaticamente
+4. La tabla muestra solo los resultados filtrados
+
+Para volver a ver todo: cambiar los filtros a "All" o hacer click en "Home" en el sidebar.
+
+---
+
+## 7. Secciones Colapsables
 
 Los paneles con header dorado o teal son colapsables:
 
@@ -254,7 +288,7 @@ Los paneles con header dorado o teal son colapsables:
 
 ---
 
-## 7. Responsive (Mobile/Tablet)
+## 8. Responsive (Mobile/Tablet)
 
 En pantallas chicas (< 900px):
 
@@ -268,7 +302,7 @@ En pantallas chicas (< 900px):
 
 ---
 
-## 8. Interpretacion de Resultados
+## 9. Interpretacion de Resultados
 
 ### Priorizar la remediacion
 

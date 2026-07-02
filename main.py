@@ -313,7 +313,16 @@ def scan(config, output, output_formats, scanner_list, regions_list, interactive
 
     # Generate reports
     console.print("[bold]Generating reports...[/bold]")
-    formats = [f.strip().lower() for f in output_formats.split(",")]
+    # Use CLI format if specified, otherwise read from config
+    if output_formats == "html,json":
+        # Default value - check if config has formats defined
+        config_formats = cfg.get("output", {}).get("formats", [])
+        if config_formats:
+            formats = [f.strip().lower() for f in config_formats]
+        else:
+            formats = ["html", "json"]
+    else:
+        formats = [f.strip().lower() for f in output_formats.split(",")]
 
     generated_files = []
 
