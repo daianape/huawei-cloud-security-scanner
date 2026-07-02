@@ -343,6 +343,21 @@ Causa: El project_id no corresponde a la region.
 Solucion: Verificar en My Credentials que cada project_id coincide con su region.
 ```
 
+### "El SDK de [servicio] no esta instalado"
+```
+Causa: Algun paquete del requirements.txt no se instalo correctamente.
+
+Solucion: Verificar e instalar manualmente:
+  pip show huaweicloudsdkidentitycenter
+  pip show huaweicloudsdkrms
+
+Si dice "Package not found", instalar individualmente:
+  pip install huaweicloudsdkidentitycenter huaweicloudsdkrms
+
+O reinstalar todo:
+  pip install -r requirements.txt --force-reinstall
+```
+
 ### "Region not in SDK registry, using explicit endpoint"
 ```
 Esto es informativo, no un error. El scanner usa endpoint directo para regiones
