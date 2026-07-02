@@ -99,7 +99,6 @@ scanners:
   cts: true
   elb: true
   # Nuevos (alta prioridad)
-  identity-center: true
   rds: true
   dcs: true
   nat: true
@@ -117,12 +116,14 @@ scanners:
   functiongraph: true
   ces: true
   lts: true
-  config: true
   smn: true
   # Adicionales
   bms: true
   ims: true
-  tms: true
+  # Servicios globales (requieren habilitacion previa en la cuenta)
+  identity-center: false
+  config: false
+  tms: false
 
 # === OUTPUT ===
 output:
