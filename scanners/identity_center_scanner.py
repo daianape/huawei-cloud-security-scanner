@@ -57,6 +57,15 @@ class IdentityCenterScanner(BaseScanner):
                 .with_region(IdentityCenterRegion.value_of(self.region))
                 .build()
             )
+        except (KeyError, ValueError):
+            endpoint = f"https://identitycenter.{self.region}.myhuaweicloud.com"
+            self.client = (
+                IdentityCenterClient.new_builder()
+                .with_credentials(creds)
+                .with_http_config(config)
+                .with_endpoint(endpoint)
+                .build()
+            )
         except Exception as e:
             self.logger.warning(f"Identity Center not available in region {self.region}: {e}")
             self.client = None
