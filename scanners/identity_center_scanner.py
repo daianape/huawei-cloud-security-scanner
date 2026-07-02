@@ -93,14 +93,16 @@ class IdentityCenterScanner(BaseScanner):
 
         if not self.client:
             self._add_finding(
-                check_id="IDC-00",
-                check_title="Identity Center No Disponible en Region",
-                severity=Severity.INFORMATIONAL,
-                status=Status.NOT_AVAILABLE,
+                check_id="IDC-01",
+                check_title="Identity Center No Habilitado",
+                severity=Severity.HIGH,
+                status=Status.FAIL,
                 description=(
-                    f"IAM Identity Center no esta disponible o habilitado "
-                    f"en la region {self.region}."
+                    "IAM Identity Center no esta habilitado en esta cuenta. "
+                    "Sin Identity Center no hay gestion centralizada de acceso, "
+                    "SSO ni control de permission sets."
                 ),
+                remediation="Habilitar IAM Identity Center para gestion centralizada de acceso.",
             )
             return []
 
