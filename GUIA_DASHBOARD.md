@@ -185,9 +185,27 @@ Las columnas ordenables son: Service, Region, Check, Type, ResourceID, Severity,
 | Boton | Que hace |
 |-------|----------|
 | **Copy** | Copia la tabla al clipboard (para pegar en Excel) |
-| **CSV** | Descarga un archivo CSV con los findings filtrados |
+| **CSV** | Descarga un archivo CSV con los findings filtrados (respeta columnas visibles) |
+| **Column visibility** | Muestra/oculta columnas de la tabla |
 
-### 4.6 Tabs
+### 4.6 Column Visibility (Visibilidad de Columnas)
+
+El boton azul "Column visibility" abre un dropdown con las 7 columnas de la tabla:
+
+- Service, Region, Check, Type, ResourceID, Severity, Status
+
+**Click en un nombre** para ocultar/mostrar esa columna:
+- Texto normal = columna visible
+- Texto tachado + opaco = columna oculta
+
+Esto es util para:
+- Simplificar la vista cuando todas las findings son del mismo servicio
+- Ocultar "Type" (siempre es Security por ahora)
+- Exportar un CSV con solo las columnas que necesitas
+
+El menu se cierra automaticamente al hacer click fuera de el.
+
+### 4.7 Tabs
 
 | Tab | Contenido |
 |-----|-----------|
@@ -340,7 +358,7 @@ Repetir para High, luego Medium
 
 ---
 
-## 9. Exportar para Reportes
+## 10. Exportar para Reportes
 
 ### Opcion 1: CSV desde el Dashboard
 
@@ -363,7 +381,7 @@ Repetir para High, luego Medium
 
 ---
 
-## 10. Tips y Trucos
+## 11. Tips y Trucos
 
 | Tip | Descripcion |
 |-----|-------------|
@@ -376,7 +394,7 @@ Repetir para High, luego Medium
 
 ---
 
-## 11. Limitaciones Conocidas
+## 12. Limitaciones Conocidas
 
 - El archivo HTML puede ser grande si hay muchos findings (> 5000 recursos)
 - Chart.js se carga desde CDN; sin internet los graficos no se renderizan (los datos y tablas si funcionan)
@@ -385,7 +403,7 @@ Repetir para High, luego Medium
 
 ---
 
-## 12. Troubleshooting del Dashboard
+## 13. Troubleshooting del Dashboard
 
 | Problema | Solucion |
 |----------|----------|

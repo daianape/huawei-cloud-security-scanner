@@ -225,6 +225,15 @@ class HTMLReportGenerator:
             ".table-toolbar-left { display: flex; gap: 5px; align-items: center; }\n"
             ".table-toolbar-left button { padding: 5px 12px; border: 1px solid #ccc; background: #f8f8f8; font-size: 12px; cursor: pointer; border-radius: 3px; }\n"
             ".table-toolbar-left button:hover { background: #e8e8e8; }\n"
+            "/* Column Visibility */\n"
+            ".col-visibility-wrapper { position: relative; display: inline-block; }\n"
+            ".col-visibility-btn { padding: 5px 12px; border: 1px solid #0073bb; background: #0073bb; color: #fff; font-size: 12px; cursor: pointer; border-radius: 3px; }\n"
+            ".col-visibility-btn:hover { background: #005a99; }\n"
+            ".col-visibility-menu { display: none; position: absolute; top: 100%; left: 0; background: #0073bb; min-width: 150px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 200; border-radius: 3px; margin-top: 2px; }\n"
+            ".col-visibility-menu.open { display: block; }\n"
+            ".col-vis-item { padding: 8px 15px; color: #fff; font-size: 13px; cursor: pointer; transition: background 0.1s; }\n"
+            ".col-vis-item:hover { background: #005a99; }\n"
+            ".col-vis-item.inactive { opacity: 0.5; text-decoration: line-through; }\n"
             ".table-toolbar-right { display: flex; align-items: center; gap: 5px; }\n"
             ".table-toolbar-right label { font-size: 13px; color: #666; }\n"
             ".table-toolbar-right input { padding: 5px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; width: 180px; }\n"
@@ -353,6 +362,17 @@ class HTMLReportGenerator:
             '<option>25</option><option>50</option><option>100</option></select> entries</div>'
             '<button onclick="copyFindings()">Copy</button>'
             '<button onclick="exportCSV()">CSV</button>'
+            '<div class="col-visibility-wrapper">'
+            '<button onclick="toggleColVisibility()" class="col-visibility-btn">Column visibility &#x25BE;</button>'
+            '<div class="col-visibility-menu" id="col-visibility-menu">'
+            '<div class="col-vis-item active" data-col="0" onclick="toggleColumn(0)">Service</div>'
+            '<div class="col-vis-item active" data-col="1" onclick="toggleColumn(1)">Region</div>'
+            '<div class="col-vis-item active" data-col="2" onclick="toggleColumn(2)">Check</div>'
+            '<div class="col-vis-item active" data-col="3" onclick="toggleColumn(3)">Type</div>'
+            '<div class="col-vis-item active" data-col="4" onclick="toggleColumn(4)">ResourceID</div>'
+            '<div class="col-vis-item active" data-col="5" onclick="toggleColumn(5)">Severity</div>'
+            '<div class="col-vis-item active" data-col="6" onclick="toggleColumn(6)">Status</div>'
+            '</div></div>'
             '</div>'
             '<div class="table-toolbar-right">'
             '<label>Search:</label><input type="text" id="search-input" oninput="searchFindings()">'
@@ -769,8 +789,44 @@ class HTMLReportGenerator:
         )
 
     def _get_js_utilities(self) -> str:
-        """JS utility functions (copy, export, etc.)."""
+        """JS utility functions (copy, export, column visibility, etc.)."""
         return (
+            'var hiddenColumns = [];\n'
+            'function toggleColVisibility() {\n'
+            '    var menu = document.getElementById("col-visibility-menu");\n'
+            '    menu.classList.toggle("open");\n'
+            '}\n'
+            '// Close menu when clicking outside\n'
+            'document.addEventListener("click", function(e) {\n'
+            '    var wrapper = document.querySelector(".col-visibility-wrapper");\n'
+            '    if (wrapper && !wrapper.contains(e.target)) {\n'
+            '        document.getElementById("col-visibility-menu").classList.remove("open");\n'
+            '    }\n'
+            '});\n'
+            'function toggleColumn(colIdx) {\n'
+            '    var idx = hiddenColumns.indexOf(colIdx);\n'
+            '    if (idx === -1) { hiddenColumns.push(colIdx); }\n'
+            '    else { hiddenColumns.splice(idx, 1); }\n'
+            '    // Update menu item style\n'
+            '    var items = document.querySelectorAll(".col-vis-item");\n'
+            '    items.forEach(function(item) {\n'
+            '        var col = parseInt(item.getAttribute("data-col"));\n'
+            '        if (hiddenColumns.indexOf(col) !== -1) {\n'
+            '            item.classList.remove("active"); item.classList.add("inactive");\n'
+            '        } else {\n'
+            '            item.classList.add("active"); item.classList.remove("inactive");\n'
+            '        }\n'
+            '    });\n'
+            '    // Hide/show columns in table\n'
+            '    var table = document.getElementById("findings-table");\n'
+            '    var rows = table.querySelectorAll("tr");\n'
+            '    rows.forEach(function(row) {\n'
+            '        var cells = row.querySelectorAll("th, td");\n'
+            '        cells.forEach(function(cell, i) {\n'
+            '            cell.style.display = hiddenColumns.indexOf(i) !== -1 ? "none" : "";\n'
+            '        });\n'
+            '    });\n'
+            '}\n'
             'function copyFindings() {\n'
             '    var table = document.getElementById("findings-table");\n'
             '    var range = document.createRange(); range.selectNode(table);\n'
@@ -779,10 +835,14 @@ class HTMLReportGenerator:
             '    alert("Table copied to clipboard");\n'
             '}\n'
             'function exportCSV() {\n'
-            '    var csv = "Service,Region,Check,Type,ResourceID,Severity,Status\\n";\n'
+            '    var headers = ["Service","Region","Check","Type","ResourceID","Severity","Status"];\n'
+            '    var visibleHeaders = headers.filter(function(_, i) { return hiddenColumns.indexOf(i) === -1; });\n'
+            '    var csv = visibleHeaders.join(",") + "\\n";\n'
             '    filteredFindings.forEach(function(f) {\n'
-            '        csv += [(f.service||"").toUpperCase(), f.region||"GLOBAL", f.check_id||"",\n'
-            '            "Security", f.resource_name||f.resource_id||"", f.severity||"", f.status||""].join(",") + "\\n";\n'
+            '        var row = [(f.service||"").toUpperCase(), f.region||"GLOBAL", f.check_id||"",\n'
+            '            "Security", f.resource_name||f.resource_id||"", f.severity||"", f.status||""];\n'
+            '        var visibleRow = row.filter(function(_, i) { return hiddenColumns.indexOf(i) === -1; });\n'
+            '        csv += visibleRow.join(",") + "\\n";\n'
             '    });\n'
             '    var blob = new Blob([csv], { type: "text/csv" });\n'
             '    var url = URL.createObjectURL(blob);\n'
