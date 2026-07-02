@@ -68,7 +68,7 @@ class TMSScanner(BaseScanner):
             self._add_finding(
                 check_id="TMS-01",
                 check_title="Tag Management Service No Habilitado",
-                severity=Severity.HIGH,
+                severity=Severity.MEDIUM,
                 status=Status.FAIL,
                 description=(
                     "Tag Management Service (TMS) no esta habilitado en esta cuenta. "
