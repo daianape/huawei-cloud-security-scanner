@@ -53,7 +53,7 @@ class ConfigScanner(BaseScanner):
                 .build()
             )
         except (KeyError, ValueError):
-            endpoint = f"https://rms.{self.region}.myhuaweicloud.com"
+            endpoint = "https://rms.myhuaweicloud.com"
             self.client = (
                 RmsClient.new_builder()
                 .with_credentials(creds)

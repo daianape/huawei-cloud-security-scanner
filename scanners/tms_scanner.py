@@ -52,7 +52,7 @@ class TMSScanner(BaseScanner):
                 .build()
             )
         except (KeyError, ValueError):
-            endpoint = f"https://tms.{self.region}.myhuaweicloud.com"
+            endpoint = "https://tms.myhuaweicloud.com"
             self.client = (
                 TmsClient.new_builder()
                 .with_credentials(creds)
