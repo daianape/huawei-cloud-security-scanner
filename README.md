@@ -9,7 +9,7 @@ Herramienta de evaluacion de seguridad para cuentas de Huawei Cloud. Escanea con
 - **Multi Region**: escanea una region, varias, o todas las configuradas en una sola ejecucion
 - **Multi Account**: soporte para multiples cuentas usando IAM Agencies
 - **Regiones custom**: soporta regiones locales no registradas en el SDK (como sa-argentina-1)
-- **Dashboard HTML interactivo**: sidebar, graficos, tabla de hallazgos filtrable
+- **Dashboard HTML interactivo**: estilo AWS Service Screener con sidebar navy, stat cards coloridas, graficos, check cards por servicio y tablas con filtros avanzados
 - **Multiples formatos**: HTML, JSON, CSV (compatible con Excel)
 - **Credenciales seguras**: AK/SK por variables de entorno, nunca en archivos
 - **Solo lectura**: no crea, modifica ni elimina ningun recurso
@@ -155,9 +155,11 @@ python main.py validate
 
 ## Output
 
+![Dashboard preview](docs/images/dashboard-home-full.png)
+
 | Formato | Archivo | Uso |
 |---------|---------|-----|
-| HTML | `output/index.html` | Dashboard visual interactivo |
+| HTML | `output/index.html` | Dashboard visual interactivo (estilo AWS Service Screener) |
 | JSON | `output/scan_report_FECHA.json` | Integracion SIEM, automatizacion |
 | CSV | `output/scan_findings_FECHA.csv` | Excel, filtros, pivot tables |
 

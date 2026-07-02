@@ -144,29 +144,29 @@ class HTMLReportGenerator:
             "body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: #f4f4f4; color: #333; font-size: 14px; }\n"
             ".layout { display: flex; min-height: 100vh; }\n"
             "/* Sidebar */\n"
-            ".sidebar { width: 220px; background: #232f3e; color: #fff; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 1000; border-right: 3px solid #f0ad4e; }\n"
-            ".sidebar-header { padding: 15px 12px; background: #1a2332; border-bottom: 1px solid #37475a; text-align: center; }\n"
-            ".logo { display: flex; align-items: center; gap: 8px; justify-content: center; }\n"
-            ".logo-icon { width: 36px; height: 36px; background: #f0ad4e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }\n"
-            ".logo-text { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.2; }\n"
-            ".logo-subtitle { font-size: 10px; color: #f0ad4e; font-style: italic; }\n"
-            ".nav-menu { list-style: none; padding: 5px 0; }\n"
-            ".nav-section { padding: 12px 15px 4px; font-size: 10px; text-transform: uppercase; color: #8899a6; letter-spacing: 1.2px; font-weight: 600; }\n"
-            ".nav-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s; font-size: 13px; color: #d5dbdb; }\n"
+            ".sidebar { width: 180px; background: #232f3e; color: #fff; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 1000; border-right: 3px solid #f0ad4e; }\n"
+            ".sidebar-header { padding: 10px 10px; background: #1a2332; border-bottom: 1px solid #37475a; text-align: center; }\n"
+            ".logo { display: flex; align-items: center; gap: 6px; justify-content: center; }\n"
+            ".logo-icon { width: 28px; height: 28px; background: #f0ad4e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }\n"
+            ".logo-text { font-size: 11px; font-weight: 700; color: #fff; line-height: 1.2; }\n"
+            ".logo-subtitle { font-size: 9px; color: #f0ad4e; font-style: italic; }\n"
+            ".nav-menu { list-style: none; padding: 3px 0; }\n"
+            ".nav-section { padding: 8px 12px 3px; font-size: 9px; text-transform: uppercase; color: #8899a6; letter-spacing: 1.2px; font-weight: 600; }\n"
+            ".nav-item { padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; font-size: 12px; color: #d5dbdb; }\n"
             ".nav-item:hover { background: #37475a; color: #fff; }\n"
             ".nav-item.active { background: #0073bb; color: #fff; font-weight: 600; }\n"
             ".nav-icon { font-size: 14px; width: 18px; text-align: center; }\n"
             "/* Main Content */\n"
-            ".main-content { margin-left: 220px; flex: 1; min-height: 100vh; background: #f4f4f4; }\n"
-            ".top-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 25px; background: #fff; border-bottom: 2px solid #e8e8e8; position: sticky; top: 0; z-index: 100; }\n"
+            ".main-content { margin-left: 180px; flex: 1; min-height: 100vh; background: #f4f4f4; }\n"
+            ".top-bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 18px; background: #fff; border-bottom: 2px solid #e8e8e8; position: sticky; top: 0; z-index: 100; }\n"
             ".menu-toggle { display: none; background: none; border: none; font-size: 22px; cursor: pointer; color: #232f3e; }\n"
             ".top-bar-left { display: flex; align-items: center; gap: 15px; }\n"
             ".top-bar-link { color: #0073bb; font-size: 13px; text-decoration: none; }\n"
             ".breadcrumb { font-size: 13px; color: #666; }\n"
             ".account-selector select { padding: 5px 10px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }\n"
-            ".page { display: none; padding: 20px 25px; }\n"
+            ".page { display: none; padding: 15px 20px; }\n"
             ".page.active { display: block; }\n"
-            ".page-title { font-size: 22px; font-weight: 400; color: #232f3e; margin-bottom: 20px; }\n"
+            ".page-title { font-size: 18px; font-weight: 400; color: #232f3e; margin-bottom: 12px; }\n"
             + self._get_css_cards()
             + self._get_css_tables()
         )
@@ -175,11 +175,11 @@ class HTMLReportGenerator:
         """CSS for stat cards, section panels, charts, check cards."""
         return (
             "/* KPI Stat Cards */\n"
-            ".stat-cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0; margin-bottom: 20px; }\n"
-            ".stat-card { padding: 15px 18px; color: #fff; position: relative; min-height: 90px; display: flex; flex-direction: column; justify-content: center; }\n"
-            ".stat-card-number { font-size: 36px; font-weight: 700; line-height: 1; }\n"
-            ".stat-card-label { font-size: 12px; margin-top: 4px; opacity: 0.9; }\n"
-            ".stat-card-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 40px; opacity: 0.3; }\n"
+            ".stat-cards-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; margin-bottom: 12px; }\n"
+            ".stat-card { padding: 10px 14px; color: #fff; position: relative; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }\n"
+            ".stat-card-number { font-size: 24px; font-weight: 700; line-height: 1; }\n"
+            ".stat-card-label { font-size: 11px; margin-top: 3px; opacity: 0.9; }\n"
+            ".stat-card-icon { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 28px; opacity: 0.3; }\n"
             ".stat-card.green { background: #27ae60; }\n"
             ".stat-card.blue { background: #2980b9; }\n"
             ".stat-card.teal { background: #1abc9c; }\n"
@@ -187,22 +187,23 @@ class HTMLReportGenerator:
             ".stat-card.red { background: #e74c3c; }\n"
             ".stat-card.navy { background: #232f3e; }\n"
             "/* Section Panels */\n"
-            ".section-panel { background: #fff; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }\n"
-            ".section-header { background: #f0ad4e; color: #fff; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }\n"
-            ".section-header .toggle-icon { font-size: 18px; font-weight: bold; }\n"
+            ".section-panel { background: #fff; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }\n"
+            ".section-header { background: #f0ad4e; color: #fff; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }\n"
+            ".section-header .toggle-icon { font-size: 16px; font-weight: bold; }\n"
             ".section-header.teal-header { background: #1abc9c; }\n"
             ".section-header.red-header { background: #e74c3c; }\n"
-            ".section-body { padding: 18px; display: block; }\n"
+            ".section-body { padding: 12px; display: block; }\n"
             ".section-body.collapsed { display: none; }\n"
             "/* Charts */\n"
-            ".charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }\n"
-            ".chart-panel { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }\n"
-            ".chart-panel canvas { padding: 15px; }\n"
+            ".charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }\n"
+            ".chart-panel { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }\n"
+            ".chart-panel .section-body { padding: 8px 12px; max-height: 260px; }\n"
+            ".chart-panel canvas { max-height: 230px; width: 100% !important; height: auto !important; }\n"
             "/* Check Cards */\n"
-            ".check-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }\n"
-            ".check-card { background: #fff; border: 1px solid #e8e8e8; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: box-shadow 0.15s; }\n"
+            ".check-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-bottom: 12px; }\n"
+            ".check-card { background: #fff; border: 1px solid #e8e8e8; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: box-shadow 0.15s; }\n"
             ".check-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }\n"
-            ".check-card-name { font-size: 13px; color: #232f3e; font-weight: 500; }\n"
+            ".check-card-name { font-size: 12px; color: #232f3e; font-weight: 500; }\n"
             ".check-card-badges { display: flex; gap: 4px; align-items: center; }\n"
             ".pillar-badge { padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; color: #fff; }\n"
             ".pillar-security { background: #e74c3c; }\n"
@@ -223,16 +224,16 @@ class HTMLReportGenerator:
             "/* Table toolbar */\n"
             ".table-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }\n"
             ".table-toolbar-left { display: flex; gap: 5px; align-items: center; }\n"
-            ".table-toolbar-left button { padding: 5px 12px; border: 1px solid #ccc; background: #f8f8f8; font-size: 12px; cursor: pointer; border-radius: 3px; }\n"
+            ".table-toolbar-left button { padding: 5px 12px; border: 1px solid #ccc; background: #f8f8f8; font-size: 12px; cursor: pointer; border-radius: 3px; color: #333; }\n"
             ".table-toolbar-left button:hover { background: #e8e8e8; }\n"
             "/* Column Visibility */\n"
             ".col-visibility-wrapper { position: relative; display: inline-block; }\n"
-            ".col-visibility-btn { padding: 5px 12px; border: 1px solid #0073bb; background: #0073bb; color: #fff; font-size: 12px; cursor: pointer; border-radius: 3px; }\n"
-            ".col-visibility-btn:hover { background: #005a99; }\n"
-            ".col-visibility-menu { display: none; position: absolute; top: 100%; left: 0; background: #0073bb; min-width: 150px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 200; border-radius: 3px; margin-top: 2px; }\n"
+            ".table-toolbar-left .col-visibility-wrapper .col-visibility-btn { padding: 5px 12px; border: 1px solid #0073bb !important; background: #0073bb !important; color: #fff !important; font-size: 12px; cursor: pointer; border-radius: 3px; }\n"
+            ".table-toolbar-left .col-visibility-wrapper .col-visibility-btn:hover { background: #005a99 !important; border-color: #005a99 !important; }\n"
+            ".col-visibility-menu { display: none; position: absolute; top: 100%; left: 0; background: #232f3e; min-width: 150px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 200; border-radius: 3px; margin-top: 2px; }\n"
             ".col-visibility-menu.open { display: block; }\n"
             ".col-vis-item { padding: 8px 15px; color: #fff; font-size: 13px; cursor: pointer; transition: background 0.1s; }\n"
-            ".col-vis-item:hover { background: #005a99; }\n"
+            ".col-vis-item:hover { background: #37475a; }\n"
             ".col-vis-item.inactive { opacity: 0.5; text-decoration: line-through; }\n"
             ".table-toolbar-right { display: flex; align-items: center; gap: 5px; }\n"
             ".table-toolbar-right label { font-size: 13px; color: #666; }\n"
@@ -277,7 +278,7 @@ class HTMLReportGenerator:
             ".check-fail { color: #e74c3c; }\n"
             ".check-warn { color: #f0ad4e; }\n"
             "/* Responsive */\n"
-            "@media (max-width: 900px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .menu-toggle { display: block; } .stat-cards-row { grid-template-columns: repeat(2, 1fr); } .charts-row { grid-template-columns: 1fr; } .check-cards-grid { grid-template-columns: 1fr; } }\n"
+            "@media (max-width: 900px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .menu-toggle { display: block; } .stat-cards-row { grid-template-columns: repeat(3, 1fr); } .charts-row { grid-template-columns: 1fr; } .check-cards-grid { grid-template-columns: 1fr 1fr; } }\n"
         )
 
     def _get_html_body(self) -> str:
@@ -330,11 +331,11 @@ class HTMLReportGenerator:
             '<div class="charts-row">'
             '<div class="chart-panel">'
             '<div class="section-header" onclick="toggleSection(this)">High Risk - Group by Service <span class="toggle-icon">&minus;</span></div>'
-            '<div class="section-body"><canvas id="serviceChart" height="200"></canvas></div>'
+            '<div class="section-body"><canvas id="serviceChart" height="220"></canvas></div>'
             '</div>'
             '<div class="chart-panel">'
             '<div class="section-header" onclick="toggleSection(this)">High Risk - Group by Severity <span class="toggle-icon">&minus;</span></div>'
-            '<div class="section-body"><canvas id="severityChart" height="200"></canvas></div>'
+            '<div class="section-body"><canvas id="severityChart" height="220"></canvas></div>'
             '</div></div>'
             '<div class="section-panel">'
             '<div class="section-header teal-header" onclick="toggleSection(this)">Services Overview <span class="toggle-icon">&minus;</span></div>'
@@ -363,7 +364,7 @@ class HTMLReportGenerator:
             '<button onclick="copyFindings()">Copy</button>'
             '<button onclick="exportCSV()">CSV</button>'
             '<div class="col-visibility-wrapper">'
-            '<button onclick="toggleColVisibility()" class="col-visibility-btn">Column visibility &#x25BE;</button>'
+            '<button onclick="toggleColVisibility()" class="col-visibility-btn" style="background:#0073bb;color:#fff;border:1px solid #0073bb;">Column visibility &#x25BE;</button>'
             '<div class="col-visibility-menu" id="col-visibility-menu">'
             '<div class="col-vis-item active" data-col="0" onclick="toggleColumn(0)">Service</div>'
             '<div class="col-vis-item active" data-col="1" onclick="toggleColumn(1)">Region</div>'
@@ -549,7 +550,7 @@ class HTMLReportGenerator:
             '                SCAN_DATA.severity_counts.informational\n'
             '            ], backgroundColor: ["#8e44ad","#e74c3c","#f0ad4e","#5bc0de","#5cb85c"] }]\n'
             '        },\n'
-            '        options: { responsive: true, plugins: { legend: { position: "right" } } }\n'
+            '        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { font: { size: 11 } } } } }\n'
             '    });\n'
             '    var svcCtx = document.getElementById("serviceChart").getContext("2d");\n'
             '    var services = Object.keys(SCAN_DATA.service_counts);\n'
@@ -559,7 +560,7 @@ class HTMLReportGenerator:
             '    new Chart(svcCtx, {\n'
             '        type: "bar",\n'
             '        data: { labels: services, datasets: [{ label: "Findings", data: svcData, backgroundColor: barColors }] },\n'
-            '        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }\n'
+            '        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } } }\n'
             '    });\n'
             '}\n'
         )

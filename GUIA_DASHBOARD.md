@@ -1,6 +1,6 @@
 # Guia de Uso del Dashboard HTML
 
-Esta guia explica como navegar y aprovechar el dashboard HTML interactivo generado por Huawei Cloud Security Scanner.
+Esta guia explica como navegar y aprovechar el dashboard HTML interactivo generado por Huawei Cloud Security Scanner. El dashboard esta diseñado con un estilo visual inspirado en AWS Service Screener: sidebar oscuro navy, headers dorados colapsables, stat cards coloridas y tablas con filtros avanzados.
 
 ![Vista general del dashboard](docs/images/dashboard-home-full.png)
 
@@ -37,7 +37,7 @@ El dashboard tiene 3 zonas principales:
 
 ## 1. Sidebar (Panel Izquierdo)
 
-El sidebar oscuro a la izquierda contiene la navegacion principal.
+El sidebar navy oscuro (#232f3e) a la izquierda contiene la navegacion principal con borde dorado lateral.
 
 ![Sidebar con navegacion de servicios](docs/images/dashboard-sidebar.png)
 
@@ -115,8 +115,10 @@ Los graficos son interactivos: pasar el mouse sobre un segmento muestra el valor
 
 Grid de cards clickeables, una por cada servicio escaneado. Cada card muestra:
 - Nombre del servicio
-- Badge "Security"
-- Numero de findings
+- Badge "Security" (pillar badge rojo)
+- Numero de findings (severity dot)
+
+![Grid de service cards](docs/images/dashboard-home-services.png)
 
 **Click en una card** para ir a la pagina Findings con ese servicio ya filtrado.
 
@@ -126,6 +128,8 @@ Grid de cards clickeables, una por cada region escaneada. Cada card muestra:
 - Nombre de la region (ej: LA-SOUTH-2, SA-ARGENTINA-1)
 - Total de findings en esa region
 - Indicador de severidad (rojo si hay Critical/High, amarillo si Medium, cyan si solo Low)
+
+![Grid de region cards](docs/images/dashboard-home-regions.png)
 
 **Click en una card** para ir a la pagina Findings con esa region ya filtrada.
 
@@ -140,6 +144,8 @@ Esta pagina muestra TODOS los hallazgos en una tabla unificada.
 ### 4.1 Filtros
 
 Arriba de la tabla hay 4 filtros combinables:
+
+![Filtros y barra de busqueda](docs/images/dashboard-findings-filters.png)
 
 | Filtro | Opciones |
 |--------|----------|
@@ -245,6 +251,8 @@ Grid de cards mostrando cada check unico del servicio:
 ### 5.4 Detail (Vista de Recursos)
 
 La seccion "Detail" muestra los recursos individuales agrupados por region:
+
+![Resource cards con detalle de checks](docs/images/dashboard-service-resources.png)
 
 ```
 la-south-2
@@ -423,14 +431,34 @@ Las imagenes de esta guia se encuentran en `docs/images/`. Para generarlas:
 2. Abrir `output/index.html` en el navegador
 3. Tomar los siguientes screenshots y guardarlos con estos nombres exactos:
 
-| Archivo | Que capturar |
-|---------|--------------|
-| `dashboard-home-full.png` | Pagina Home completa (vista general con sidebar visible) |
-| `dashboard-sidebar.png` | Solo el sidebar (recortar la zona izquierda) |
-| `dashboard-home-kpis.png` | Stat cards + barras de severidad (zona superior de Home) |
-| `dashboard-home-charts.png` | Los dos graficos (doughnut + barras) |
-| `dashboard-findings-table.png` | Pagina Findings con la tabla y filtros visibles |
-| `dashboard-service-detail.png` | Vista detalle de un servicio (ej: IAM) con resource cards |
-| `dashboard-mobile.png` | Vista mobile (F12 > toggle device toolbar > 375px ancho) |
+### Lista completa de imagenes requeridas
 
-**Tip**: En Chrome, F12 > "Toggle device toolbar" para simular mobile.
+| # | Archivo | Que capturar | Seccion de la guia |
+|---|---------|--------------|-------------------|
+| 1 | `dashboard-home-full.png` | Pagina Home completa con sidebar visible, stat cards coloridas y graficos | Portada + Seccion 3 |
+| 2 | `dashboard-sidebar.png` | Solo el sidebar navy (recortar zona izquierda mostrando logo, Pages y Services) | Seccion 1 |
+| 3 | `dashboard-home-kpis.png` | Stat cards de colores (verde, azul, rojo, teal, navy, amarillo) + barras de severidad | Seccion 3.1 y 3.2 |
+| 4 | `dashboard-home-charts.png` | Los dos graficos: barras por servicio + doughnut de severidad (con headers dorados) | Seccion 3.3 |
+| 5 | `dashboard-home-services.png` | Grid de Service cards con badges Security y severity dots (seccion teal "Services Overview") | Seccion 3.4 |
+| 6 | `dashboard-home-regions.png` | Grid de Region cards con indicadores de severidad (seccion "Regions Overview") | Seccion 3.5 |
+| 7 | `dashboard-findings-table.png` | Pagina Findings: tabs, toolbar (Copy/CSV/Column visibility), filtros y tabla con datos | Seccion 4 |
+| 8 | `dashboard-findings-filters.png` | Detalle de los filtros (Service, Region, Severity, Status) y campo Search | Seccion 4.1 y 4.2 |
+| 9 | `dashboard-service-detail.png` | Vista detalle de un servicio: stat cards + check cards grid con pillar badges | Seccion 5 |
+| 10 | `dashboard-service-resources.png` | Seccion Detail: resource cards con header dorado, tabla interna (Check/Value/Recommendation) | Seccion 5.4 |
+| 11 | `dashboard-mobile.png` | Vista mobile (F12 > toggle device toolbar > 375px) con sidebar colapsado | Seccion 8 |
+
+### Tips para los screenshots
+
+- **Chrome**: F12 > "Toggle device toolbar" para simular mobile
+- **Resolusion recomendada**: 1920x1080 para desktop, 375x812 para mobile
+- **Formato**: PNG, ancho maximo ~1200px para que se vean bien en GitHub
+- **Recortar**: eliminar bordes del navegador, mostrar solo el contenido
+
+### Elemento visual clave del nuevo diseño
+
+El dashboard usa la paleta visual de AWS Service Screener:
+- **Sidebar**: fondo #232f3e (navy) con borde lateral #f0ad4e (dorado)
+- **Section headers**: #f0ad4e (dorado) y #1abc9c (teal) colapsables
+- **Stat cards**: verde (#27ae60), azul (#2980b9), rojo (#e74c3c), teal (#1abc9c), navy (#232f3e), amarillo (#f0ad4e)
+- **Check cards**: fondo blanco con pillar badges coloridos y severity dots
+- **Resource cards**: header dorado con tabla interna de checks pass/fail
