@@ -82,30 +82,15 @@ class ConfigScanner(BaseScanner):
         return [self._check_compliance_rules]
 
     def _check_compliance_rules(self) -> None:
-        """CFG-02: Check if compliance rules are configured and their status."""
+        """CFG-02: Check compliance status of configured rules."""
         try:
+            # First get the list of policy assignments
             request = ListPolicyAssignmentsRequest()
             response = self.client.list_policy_assignments(request)
+            rules = getattr(response, 'value', None) or []
+            total_rules = len(rules) if isinstance(rules, list) else 0
 
-            # Get the list of policy assignments from response
-            rules = None
-            # Try different attribute names depending on SDK version
-            for attr in ['policy_assignments', 'value', 'body']:
-                val = getattr(response, attr, None)
-                if val is not None:
-                    rules = val
-                    break
-
-            # If response itself is iterable
-            if rules is None:
-                rules = []
-
-            if isinstance(rules, list):
-                total = len(rules)
-            else:
-                total = 0
-
-            if total == 0:
+            if total_rules == 0:
                 self._add_finding(
                     check_id="CFG-02",
                     check_title="Sin Reglas de Compliance",
@@ -116,32 +101,67 @@ class ConfigScanner(BaseScanner):
                     ),
                     remediation="Configurar reglas de compliance en Config > Compliance.",
                 )
-            else:
-                # Count non-compliant rules
-                non_compliant = 0
-                for r in rules:
-                    state = getattr(r, 'compliance_state', None) or getattr(r, 'state', None)
-                    if state and str(state).lower() in ("noncompliant", "non_compliant"):
-                        non_compliant += 1
+                return
 
-                if non_compliant > 0:
-                    self._add_finding(
-                        check_id="CFG-02",
-                        check_title="Reglas de Compliance No Conformes",
-                        severity=Severity.HIGH, status=Status.FAIL,
-                        description=(
-                            f"{total} reglas configuradas, {non_compliant} no cumplen compliance. "
-                            f"Tasa de conformidad: {round((total - non_compliant) / total * 100, 1)}%."
-                        ),
-                        remediation="Revisar reglas no conformes en Config > Conformidad de recursos.",
-                    )
-                else:
-                    self._add_finding(
-                        check_id="CFG-02",
-                        check_title="Reglas de Compliance Conformes",
-                        severity=Severity.MEDIUM, status=Status.PASS,
-                        description=f"{total} reglas configuradas, todas conformes.",
-                    )
+            # Try to get compliance states for each rule
+            non_compliant_rules = []
+            compliant_rules = []
+
+            try:
+                from huaweicloudsdkrms.v1 import ListPolicyStatesByAssignmentIdRequest
+
+                for rule in rules:
+                    rule_id = rule.id
+                    rule_name = rule.name or rule_id
+
+                    try:
+                        state_req = ListPolicyStatesByAssignmentIdRequest()
+                        state_req.policy_assignment_id = rule_id
+                        state_resp = self.client.list_policy_states_by_assignment_id(state_req)
+                        states = getattr(state_resp, 'value', None) or []
+
+                        # Count non-compliant resources for this rule
+                        nc_count = sum(
+                            1 for s in states
+                            if getattr(s, 'compliance_state', '') == 'NonCompliant'
+                        )
+
+                        if nc_count > 0:
+                            non_compliant_rules.append((rule_name, nc_count))
+                        elif states:
+                            compliant_rules.append(rule_name)
+
+                    except Exception:
+                        continue
+
+            except ImportError:
+                pass
+
+            # Report findings
+            if non_compliant_rules:
+                nc_total = sum(count for _, count in non_compliant_rules)
+                rule_details = "; ".join(
+                    f"{name} ({count} recursos)" for name, count in non_compliant_rules[:5]
+                )
+                self._add_finding(
+                    check_id="CFG-02",
+                    check_title="Reglas de Compliance No Conformes",
+                    severity=Severity.HIGH, status=Status.FAIL,
+                    description=(
+                        f"{total_rules} reglas configuradas, "
+                        f"{len(non_compliant_rules)} no conformes con "
+                        f"{nc_total} recursos en incumplimiento. "
+                        f"Top reglas: {rule_details}"
+                    ),
+                    remediation="Revisar reglas no conformes en Config > Conformidad de recursos.",
+                )
+            else:
+                self._add_finding(
+                    check_id="CFG-02",
+                    check_title="Reglas de Compliance",
+                    severity=Severity.MEDIUM, status=Status.PASS,
+                    description=f"{total_rules} reglas configuradas.",
+                )
 
         except Exception as e:
             error_msg = str(e).lower()
