@@ -18,9 +18,12 @@ try:
         FunctionGraphClient,
         ListFunctionsRequest,
     )
-    from huaweicloudsdkfunctiongraph.v2.region.function_graph_region import FunctionGraphRegion
+    try:
+        from huaweicloudsdkfunctiongraph.v2.region.function_graph_region import FunctionGraphRegion
+    except (ImportError, Exception):
+        FunctionGraphRegion = None
     FG_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception):
     FG_AVAILABLE = False
 
 

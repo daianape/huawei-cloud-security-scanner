@@ -17,9 +17,12 @@ try:
         SFSTurboClient,
         ListSharesRequest,
     )
-    from huaweicloudsdksfsturbo.v1.region.sfs_turbo_region import SFSTurboRegion
+    try:
+        from huaweicloudsdksfsturbo.v1.region.sfs_turbo_region import SFSTurboRegion
+    except (ImportError, Exception):
+        SFSTurboRegion = None
     SFS_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception):
     SFS_AVAILABLE = False
 
 
