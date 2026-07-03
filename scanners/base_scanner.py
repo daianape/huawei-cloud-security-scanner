@@ -74,6 +74,8 @@ class BaseScanner(ABC):
 
         # Try with_region() first (works for standard regions)
         try:
+            if region_class is None:
+                raise KeyError("No region class available")
             client = (
                 client_class.new_builder()
                 .with_credentials(direct_creds)
