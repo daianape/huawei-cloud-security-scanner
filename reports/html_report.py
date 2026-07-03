@@ -212,10 +212,11 @@ class HTMLReportGenerator:
             ".pillar-cost { background: #f39c12; }\n"
             ".pillar-operational { background: #1abc9c; }\n"
             ".severity-dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: bold; }\n"
-            ".dot-critical,.dot-high { background: #e74c3c; }\n"
-            ".dot-medium { background: #f0ad4e; }\n"
-            ".dot-low { background: #5bc0de; }\n"
-            ".dot-info { background: #5cb85c; }\n"
+            ".dot-critical { background: #cc0000; }\n"
+            ".dot-high { background: #e74c3c; }\n"
+            ".dot-medium { background: #f39c12; }\n"
+            ".dot-low { background: #8bc34a; }\n"
+            ".dot-info { background: #17a2b8; }\n"
         )
 
     def _get_css_tables(self) -> str:
@@ -252,13 +253,14 @@ class HTMLReportGenerator:
             ".tab-btn.active { border-bottom-color: #0073bb; font-weight: 600; }\n"
             "/* Badges */\n"
             ".badge { padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }\n"
-            ".badge-fail,.badge-high { background: #e74c3c; color: #fff; }\n"
-            ".badge-pass { background: #27ae60; color: #fff; }\n"
-            ".badge-error { background: #f0ad4e; color: #fff; }\n"
-            ".badge-critical { background: #8e44ad; color: #fff; }\n"
-            ".badge-medium { background: #f0ad4e; color: #fff; }\n"
-            ".badge-low { background: #5bc0de; color: #fff; }\n"
-            ".badge-informational,.badge-info { background: #5cb85c; color: #fff; }\n"
+            ".badge-fail { background: #dc3545; color: #fff; }\n"
+            ".badge-pass { background: #28a745; color: #fff; }\n"
+            ".badge-error { background: #6c757d; color: #fff; }\n"
+            ".badge-critical { background: #cc0000; color: #fff; }\n"
+            ".badge-high { background: #e74c3c; color: #fff; }\n"
+            ".badge-medium { background: #f39c12; color: #fff; }\n"
+            ".badge-low { background: #8bc34a; color: #fff; }\n"
+            ".badge-informational,.badge-info { background: #17a2b8; color: #fff; }\n"
             ".badge-new { background: #d4edda; color: #155724; }\n"
             "/* Filter */\n"
             ".filter-panel { margin-bottom: 15px; }\n"
@@ -665,11 +667,11 @@ class HTMLReportGenerator:
             '    var sc = SCAN_DATA.severity_counts;\n'
             '    var total = SCAN_DATA.total_failed || 1;\n'
             '    var items = [\n'
-            '        { label: t("critical"), count: sc.critical, color: "#8e44ad", filter: "critical" },\n'
+            '        { label: t("critical"), count: sc.critical, color: "#cc0000", filter: "critical" },\n'
             '        { label: t("high"), count: sc.high, color: "#e74c3c", filter: "high" },\n'
-            '        { label: t("medium"), count: sc.medium, color: "#f0ad4e", filter: "medium" },\n'
-            '        { label: t("low"), count: sc.low, color: "#5bc0de", filter: "low" },\n'
-            '        { label: t("info"), count: sc.informational, color: "#5cb85c", filter: "informational" }\n'
+            '        { label: t("medium"), count: sc.medium, color: "#f39c12", filter: "medium" },\n'
+            '        { label: t("low"), count: sc.low, color: "#8bc34a", filter: "low" },\n'
+            '        { label: t("info"), count: sc.informational, color: "#17a2b8", filter: "informational" }\n'
             '    ];\n'
             '    el.innerHTML = items.map(function(i) {\n'
             '        var pct = Math.round((i.count / total) * 100);\n'
@@ -723,7 +725,7 @@ class HTMLReportGenerator:
             '                SCAN_DATA.severity_counts.critical, SCAN_DATA.severity_counts.high,\n'
             '                SCAN_DATA.severity_counts.medium, SCAN_DATA.severity_counts.low,\n'
             '                SCAN_DATA.severity_counts.informational\n'
-            '            ], backgroundColor: ["#8e44ad","#e74c3c","#f0ad4e","#5bc0de","#5cb85c"] }]\n'
+            '            ], backgroundColor: ["#cc0000","#e74c3c","#f39c12","#8bc34a","#17a2b8"] }]\n'
             '        },\n'
             '        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { font: { size: 11 } } } } }\n'
             '    });\n'
@@ -951,12 +953,16 @@ class HTMLReportGenerator:
             '            var resF = byRes[rid];\n'
             '            html += \'<div class="resource-card"><div class="resource-card-header"><span>\' + idx + \'. \' + rid + \'</span>\' +\n'
             '                \'<span class="svc-badge">\' + service + \'</span></div>\';\n'
-            '            html += \'<table class="resource-table"><thead><tr><th>Check</th><th>Current Value</th><th>Recommendation</th></tr></thead><tbody>\';\n'
+            '            html += \'<table class="resource-table"><thead><tr><th>Check</th><th>Current Value</th><th>Recommendation</th><th>Severity</th><th>Status</th></tr></thead><tbody>\';\n'
             '            resF.forEach(function(f) {\n'
             '                var icon = f.status === "fail" ? \'<span class="check-icon check-fail">&#x2718;</span>\' :\n'
             '                    f.status === "pass" ? \'<span class="check-icon check-pass">&#x2714;</span>\' :\n'
             '                    \'<span class="check-icon check-warn">&#x26A0;</span>\';\n'
-            '                html += \'<tr><td>\' + icon + " " + (f.check_id || "-") + \'</td><td>\' + translateContent(f.description || "-") + \'</td><td>\' + translateContent(f.remediation || "-") + \'</td></tr>\';\n'
+            '                var sev = f.severity || "medium";\n'
+            '                var sevBadge = \'<span class="badge badge-\' + sev + \'">\' + sev.charAt(0).toUpperCase() + sev.slice(1) + \'</span>\';\n'
+            '                var st = f.status || "fail";\n'
+            '                var stBadge = \'<span class="badge badge-\' + st + \'">\' + st.charAt(0).toUpperCase() + st.slice(1) + \'</span>\';\n'
+            '                html += \'<tr><td>\' + icon + " " + (f.check_id || "-") + \'</td><td>\' + translateContent(f.description || "-") + \'</td><td>\' + translateContent(f.remediation || "-") + \'</td><td>\' + sevBadge + \'</td><td>\' + stBadge + \'</td></tr>\';\n'
             '            });\n'
             '            html += \'</tbody></table></div>\';\n'
             '            idx++;\n'
