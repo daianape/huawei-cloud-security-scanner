@@ -581,23 +581,27 @@ class HTMLReportGenerator:
 
     def _get_js_content_translations(self) -> str:
         """JS function to translate finding content (descriptions/remediations)."""
-        from reports.translations import CONTENT_TRANSLATIONS_ES
-        # Build JS array of [pattern, replacement] pairs
-        pairs = []
+        from reports.translations import CONTENT_TRANSLATIONS_ES, CONTENT_TRANSLATIONS_EN
+        # Build JS array of [pattern, replacement] pairs for ES
+        pairs_es = []
         for en, es in CONTENT_TRANSLATIONS_ES.items():
-            # Escape quotes for JS
             en_safe = en.replace("\\", "\\\\").replace("'", "\\'")
             es_safe = es.replace("\\", "\\\\").replace("'", "\\'")
-            pairs.append(f"['{en_safe}', '{es_safe}']")
-        pairs_js = ",\n".join(pairs)
+            pairs_es.append(f"['{en_safe}', '{es_safe}']")
+        # Build JS array for EN (reverse: spanish source -> english)
+        pairs_en = []
+        for es, en in CONTENT_TRANSLATIONS_EN.items():
+            es_safe = es.replace("\\", "\\\\").replace("'", "\\'")
+            en_safe = en.replace("\\", "\\\\").replace("'", "\\'")
+            pairs_en.append(f"['{es_safe}', '{en_safe}']")
         return (
-            'var contentTranslations = [\n'
-            + pairs_js + '\n'
-            '];\n'
+            'var translationsES = [\n' + ",\n".join(pairs_es) + '\n];\n'
+            'var translationsEN = [\n' + ",\n".join(pairs_en) + '\n];\n'
             'function translateContent(text) {\n'
-            '    if (currentLang === "en" || !text) return text;\n'
+            '    if (!text || text === "-") return text;\n'
             '    var result = text;\n'
-            '    contentTranslations.forEach(function(pair) {\n'
+            '    var dict = currentLang === "es" ? translationsES : translationsEN;\n'
+            '    dict.forEach(function(pair) {\n'
             '        if (result.indexOf(pair[0]) !== -1) {\n'
             '            result = result.split(pair[0]).join(pair[1]);\n'
             '        }\n'
