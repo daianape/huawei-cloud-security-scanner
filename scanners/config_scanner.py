@@ -103,10 +103,26 @@ class ConfigScanner(BaseScanner):
                 )
                 return
 
-            # Get non-compliant count per rule
+            # Get non-compliant count per rule with resource details
             import time
             non_compliant_rules = []
             total_nc_resources = 0
+
+            # Severity mapping based on rule name keywords
+            HIGH_KEYWORDS = ["mfa", "multi-factor", "authentication", "public", "encrypt",
+                           "ssl", "access key", "password", "inbound traffic"]
+            MEDIUM_KEYWORDS = ["logging", "log", "idle", "key pair", "backup", "policy",
+                             "tracker", "rotation"]
+
+            def _get_rule_severity(rule_name):
+                name_lower = rule_name.lower()
+                for kw in HIGH_KEYWORDS:
+                    if kw in name_lower:
+                        return Severity.HIGH
+                for kw in MEDIUM_KEYWORDS:
+                    if kw in name_lower:
+                        return Severity.MEDIUM
+                return Severity.MEDIUM
 
             try:
                 from huaweicloudsdkrms.v1 import ListPolicyStatesByAssignmentIdRequest
@@ -124,7 +140,16 @@ class ConfigScanner(BaseScanner):
                         nc_count = len(states)
 
                         if nc_count > 0:
-                            non_compliant_rules.append((rule_name, nc_count))
+                            # Collect resource details (max 10)
+                            resource_details = []
+                            for s in states[:10]:
+                                res_name = getattr(s, 'resource_name', '') or ''
+                                res_type = getattr(s, 'resource_type', '') or ''
+                                region = getattr(s, 'region_id', '') or ''
+                                if res_name:
+                                    resource_details.append(f"{res_name} ({res_type}, {region})")
+
+                            non_compliant_rules.append((rule_name, nc_count, resource_details))
                             total_nc_resources += nc_count
 
                     except Exception:
@@ -138,15 +163,23 @@ class ConfigScanner(BaseScanner):
 
             # Report findings - one per rule
             if non_compliant_rules or True:
+                # Sort by count descending
+                non_compliant_rules.sort(key=lambda x: x[1], reverse=True)
+
                 # Report each non-compliant rule individually
-                for rule_name, nc_count in non_compliant_rules:
+                for rule_name, nc_count, resources in non_compliant_rules:
+                    severity = _get_rule_severity(rule_name)
+                    resource_list = ", ".join(resources[:5])
+                    extra = f" (+{nc_count - 5} mas)" if nc_count > 5 else ""
+
                     self._add_finding(
                         check_id="CFG-02",
                         check_title=f"Regla No Conforme: {rule_name}",
-                        severity=Severity.HIGH, status=Status.FAIL,
+                        severity=severity, status=Status.FAIL,
                         description=(
                             f"Regla '{rule_name}' tiene {nc_count} recursos "
-                            f"en incumplimiento."
+                            f"en incumplimiento. "
+                            f"Recursos afectados: {resource_list}{extra}"
                         ),
                         resource_name=rule_name,
                         remediation="Revisar recursos no conformes en Config > Conformidad de recursos.",
