@@ -136,36 +136,50 @@ class ConfigScanner(BaseScanner):
             except ImportError:
                 pass
 
-            # Report findings
-            if non_compliant_rules:
-                # Sort by count descending
-                non_compliant_rules.sort(key=lambda x: x[1], reverse=True)
-                rule_details = "; ".join(
-                    f"{name} ({count})" for name, count in non_compliant_rules[:5]
-                )
-                conformance_rate = round(
-                    (total_rules - len(non_compliant_rules)) / total_rules * 100, 1
-                )
-                self._add_finding(
-                    check_id="CFG-02",
-                    check_title="Reglas de Compliance No Conformes",
-                    severity=Severity.HIGH, status=Status.FAIL,
-                    description=(
-                        f"{total_rules} reglas configuradas, "
-                        f"{len(non_compliant_rules)} no conformes, "
-                        f"{total_nc_resources} recursos en incumplimiento. "
-                        f"Tasa de conformidad: {conformance_rate}%. "
-                        f"Top reglas: {rule_details}"
-                    ),
-                    remediation="Revisar reglas no conformes en Config > Conformidad de recursos.",
-                )
-            else:
-                self._add_finding(
-                    check_id="CFG-02",
-                    check_title="Reglas de Compliance Conformes",
-                    severity=Severity.MEDIUM, status=Status.PASS,
-                    description=f"{total_rules} reglas configuradas, todas conformes.",
-                )
+            # Report findings - one per rule
+            if non_compliant_rules or True:
+                # Report each non-compliant rule individually
+                for rule_name, nc_count in non_compliant_rules:
+                    self._add_finding(
+                        check_id="CFG-02",
+                        check_title=f"Regla No Conforme: {rule_name}",
+                        severity=Severity.HIGH, status=Status.FAIL,
+                        description=(
+                            f"Regla '{rule_name}' tiene {nc_count} recursos "
+                            f"en incumplimiento."
+                        ),
+                        resource_name=rule_name,
+                        remediation="Revisar recursos no conformes en Config > Conformidad de recursos.",
+                    )
+
+                # Report compliant rules count
+                compliant_count = total_rules - len(non_compliant_rules)
+                if compliant_count > 0:
+                    self._add_finding(
+                        check_id="CFG-02",
+                        check_title="Reglas Conformes",
+                        severity=Severity.MEDIUM, status=Status.PASS,
+                        description=(
+                            f"{compliant_count} de {total_rules} reglas estan conformes. "
+                            f"Tasa de conformidad: "
+                            f"{round(compliant_count / total_rules * 100, 1)}%."
+                        ),
+                    )
+
+                # Summary finding
+                if non_compliant_rules:
+                    self._add_finding(
+                        check_id="CFG-03",
+                        check_title="Resumen de Compliance",
+                        severity=Severity.HIGH, status=Status.FAIL,
+                        description=(
+                            f"Resumen: {total_rules} reglas, "
+                            f"{len(non_compliant_rules)} no conformes, "
+                            f"{total_nc_resources} recursos en incumplimiento, "
+                            f"Tasa: {round((total_rules - len(non_compliant_rules)) / total_rules * 100, 1)}%."
+                        ),
+                        remediation="Revisar reglas no conformes en Config > Conformidad de recursos.",
+                    )
 
         except Exception as e:
             error_msg = str(e).lower()
