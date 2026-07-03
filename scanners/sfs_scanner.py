@@ -29,7 +29,7 @@ except (ImportError, Exception):
 class SFSScanner(BaseScanner):
     """Scanner for SFS security checks."""
 
-    service_name = "sfs"
+    service_name = "sfs-turbo"
     service_category = ServiceCategory.STORAGE
 
     def _init_client(self) -> None:
